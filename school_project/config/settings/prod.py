@@ -1,0 +1,54 @@
+"""
+Production settings.
+
+Every secret/host-specific value comes from an environment variable so
+the same codebase deploys anywhere (school's own server, Railway,
+Render, PythonAnywhere, ...) without code changes — only env vars change.
+
+Required environment variables:
+    DJANGO_SECRET_KEY        - a long random string, keep it secret
+    DJANGO_ALLOWED_HOSTS     - comma-separated, e.g. "materdominischool.com.ng,www.materdominischool.com.ng"
+    DATABASE_URL             - e.g. "postgres://user:pass@host:5432/dbname"
+
+Optional:
+    DJANGO_DEBUG             - "False" by default; never set "True" in production
+"""
+import os
+from .base import *  # noqa: F401,F403
+
+SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
+
+DEBUG = os.environ.get("DJANGO_DEBUG", "False") == "True"
+
+ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",")
+
+# --------------------------------------------------------------------------
+# Database — Postgres in production. We parse DATABASE_URL by hand to
+# avoid adding the dj-database-url dependency for a single line of parsing.
+# --------------------------------------------------------------------------
+import urllib.parse as _urlparse
+
+_db_url = _urlparse.urlparse(os.environ["DATABASE_URL"])
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": _db_url.path.lstrip("/"),
+        "USER": _db_url.username,
+        "PASSWORD": _db_url.password,
+        "HOST": _db_url.hostname,
+        "PORT": _db_url.port or 5432,
+        "CONN_MAX_AGE": 60,
+    }
+}
+
+# --------------------------------------------------------------------------
+# Security hardening for production only
+# --------------------------------------------------------------------------
+SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SECURE_HSTS_SECONDS = 31536000
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ school_info.school_name }} — {{ school_info.tagline }}{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <div class="container hero__inner">
+        <div class="hero__copy">
+            <p class="eyebrow">Welcome to</p>
+            <h1>{{ school_info.school_name }}</h1>
+            <p class="hero__tagline">{{ school_info.tagline|default:"A nurturing home for academic and moral excellence." }}</p>
+            <div class="hero__actions">
+                <a href="#" class="btn btn--accent">Apply for Admission</a>
+                {% if school_info.result_portal_url %}
+                <a href="{{ school_info.result_portal_url }}" class="btn btn--outline">Check Result</a>
+                {% endif %}
+            </div>
+        </div>
+        <div class="hero__arch" aria-hidden="true"></div>
+    </div>
+</section>
+
+<section class="section section--muted">
+    <div class="container">
+        <p class="section-note">
+            This is the Phase 1 scaffolding homepage. Content blocks (Why Us, About preview,
+            latest News, testimonials) are added in the next build step.
+        </p>
+    </div>
+</section>
+{% endblock %}
