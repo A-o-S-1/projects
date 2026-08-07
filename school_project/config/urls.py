@@ -14,6 +14,7 @@ from django.urls import include, path
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", include("apps.pages.urls")),
+    path("", include("apps.contact.urls")),
 ]
 
 # Serve user-uploaded media locally in development only. In production,

@@ -33,6 +33,7 @@ INSTALLED_APPS = [
 
     # Project apps (Phase 1 — public site)
     "apps.pages",
+    "apps.contact",
 ]
 
 MIDDLEWARE = [

@@ -1,6 +1,8 @@
+{% load static %}
 <footer class="site-footer">
     <div class="container site-footer__grid">
         <div>
+            <img src="{% static 'img/logo-on-dark.svg' %}" alt="" width="56" height="56" class="site-footer__crest">
             <h2 class="site-footer__brand">{{ school_info.school_name }}</h2>
             {% if school_info.address %}<p>{{ school_info.address }}</p>{% endif %}
         </div>

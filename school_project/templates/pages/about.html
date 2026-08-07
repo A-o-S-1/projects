@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}About — {{ school_info.school_name }}{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+    <div class="container">
+        <p class="eyebrow">About Us</p>
+        <h1>Our Story</h1>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container prose-grid">
+        <article>
+            <h2>History</h2>
+            <p>{{ about.history|linebreaksbr }}</p>
+        </article>
+
+        <aside class="card-stack">
+            <div class="card">
+                <h3>Mission</h3>
+                <p>{{ about.mission|linebreaksbr }}</p>
+            </div>
+            <div class="card">
+                <h3>Vision</h3>
+                <p>{{ about.vision|linebreaksbr }}</p>
+            </div>
+        </aside>
+    </div>
+</section>
+
+{% if core_values %}
+<section class="section section--muted">
+    <div class="container">
+        <h2>Our Core Values</h2>
+        <div class="value-grid">
+            {% for value in core_values %}
+            <div class="value-card">
+                <h3>{{ value.title }}</h3>
+                {% if value.description %}<p>{{ value.description }}</p>{% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+{% if about.administrator_message %}
+<section class="section">
+    <div class="container administrator-block">
+        {% if about.administrator_photo %}
+        <img src="{{ about.administrator_photo.url }}" alt="{{ about.administrator_name }}" class="administrator-block__photo">
+        {% endif %}
+        <div>
+            <p class="eyebrow">From the Administrator's Desk</p>
+            <p class="administrator-block__quote">{{ about.administrator_message|linebreaksbr }}</p>
+            <p class="administrator-block__name">{{ about.administrator_name }}</p>
+            <p class="administrator-block__title">{{ about.administrator_title }}</p>
+        </div>
+    </div>
+</section>
+{% endif %}
+{% endblock %}

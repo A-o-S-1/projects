@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Contact — {{ school_info.school_name }}{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+    <div class="container">
+        <p class="eyebrow">Contact Us</p>
+        <h1>We'd Love to Hear From You</h1>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container contact-grid">
+        <div class="contact-info">
+            <h2>Reach Us Directly</h2>
+            <ul class="footer-list">
+                {% if school_info.main_office_phone %}<li><strong>Main Office:</strong> {{ school_info.main_office_phone }}</li>{% endif %}
+                {% if school_info.admissions_phone %}<li><strong>Admissions:</strong> {{ school_info.admissions_phone }}</li>{% endif %}
+                {% if school_info.emergency_phone %}<li><strong>Student Emergency:</strong> {{ school_info.emergency_phone }}</li>{% endif %}
+                {% if school_info.email %}<li><strong>Email:</strong> <a href="mailto:{{ school_info.email }}">{{ school_info.email }}</a></li>{% endif %}
+                {% if school_info.address %}<li><strong>Address:</strong> {{ school_info.address }}</li>{% endif %}
+            </ul>
+        </div>
+
+        <form method="post" novalidate class="site-form">
+            {% csrf_token %}
+            {{ form.website }}
+            {% include "partials/form_field.html" with field=form.name %}
+            {% include "partials/form_field.html" with field=form.email %}
+            {% include "partials/form_field.html" with field=form.department %}
+            {% include "partials/form_field.html" with field=form.message %}
+            <button type="submit" class="btn btn--accent">Send Message</button>
+        </form>
+    </div>
+</section>
+{% endblock %}

@@ -21,11 +21,23 @@
     </div>
 </section>
 
+{% if about.mission %}
 <section class="section section--muted">
+    <div class="container about-preview">
+        <div>
+            <p class="eyebrow">About Us</p>
+            <h2>{{ school_info.school_name }}</h2>
+            <p>{{ about.mission|truncatewords:40 }}</p>
+            <a href="{% url 'pages:about' %}" class="btn btn--outline-dark">Read Our Full Story</a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<section class="section">
     <div class="container">
         <p class="section-note">
-            This is the Phase 1 scaffolding homepage. Content blocks (Why Us, About preview,
-            latest News, testimonials) are added in the next build step.
+            Academics, Staff Directory, Gallery, News, and Events are added in the next build steps.
         </p>
     </div>
 </section>

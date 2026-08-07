@@ -118,7 +118,9 @@ img { max-width: 100%; display: block; }
     color: white;
     text-decoration: none;
 }
-.brand__mark { color: var(--color-gold); display: flex; }
+.brand__mark { display: flex; align-items: center; }
+.brand__mark img { display: block; }
+.site-footer__crest { margin-bottom: 0.75rem; }
 .brand__text {
     font-family: var(--font-display);
     font-weight: 600;
@@ -224,6 +226,169 @@ img { max-width: 100%; display: block; }
 .section { padding-block: 4rem; }
 .section--muted { background: white; border-top: 1px solid var(--color-border); }
 .section-note { color: #6B7280; font-style: italic; }
+
+.btn--outline-dark {
+    border-color: var(--color-navy);
+    color: var(--color-navy);
+}
+.btn--outline-dark:hover { background: var(--color-navy); color: white; }
+
+.container--narrow { max-width: 680px; }
+
+/* ==========================================================================
+   Alerts / messages
+   ========================================================================== */
+.alert {
+    padding: 0.9rem 1.1rem;
+    border-radius: var(--radius);
+    margin-top: 1.5rem;
+    font-weight: 500;
+}
+.alert--success { background: #E4F1E8; color: var(--color-green); border: 1px solid #BFE0C9; }
+.alert--error { background: #FBE8E7; color: #9B2C2C; border: 1px solid #F3C6C4; }
+.alert--info { background: #EAF1FB; color: var(--color-navy); border: 1px solid #CFE0F5; }
+
+/* ==========================================================================
+   Generic page hero (About / Admissions / Contact / etc.)
+   ========================================================================== */
+.page-hero {
+    background: var(--color-navy);
+    color: white;
+    padding-block: 3.5rem;
+}
+.page-hero h1 { color: white; margin: 0; }
+.page-hero__lede { max-width: 60ch; color: rgba(255,255,255,0.85); margin-top: 0.75rem; }
+
+/* ==========================================================================
+   About page
+   ========================================================================== */
+.prose-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 2.5rem;
+}
+.card-stack { display: flex; flex-direction: column; gap: 1.25rem; }
+.card {
+    background: white;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+}
+.value-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.25rem;
+    margin-top: 1.5rem;
+}
+.value-card {
+    background: white;
+    border-left: 3px solid var(--color-gold);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 1.25rem 1.5rem;
+}
+.value-card h3 { font-size: 1.05rem; }
+.administrator-block {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 2rem;
+    align-items: start;
+}
+.administrator-block__photo {
+    border-radius: var(--radius);
+    aspect-ratio: 3/4;
+    object-fit: cover;
+}
+.administrator-block__quote {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    color: var(--color-navy);
+}
+.administrator-block__name { font-weight: 700; margin: 0.5rem 0 0; }
+.administrator-block__title { color: #6B7280; margin: 0; }
+
+@media (max-width: 800px) {
+    .prose-grid, .administrator-block { grid-template-columns: 1fr; }
+}
+
+/* ==========================================================================
+   Admissions page
+   ========================================================================== */
+.step-list { list-style: none; padding: 0; margin: 1.5rem 0 0; }
+.step-list li { display: flex; gap: 1.25rem; margin-bottom: 1.5rem; }
+.step-list__number {
+    flex-shrink: 0;
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--color-gold);
+    color: var(--color-navy);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700;
+    font-family: var(--font-display);
+}
+.checklist { padding-left: 1.25rem; }
+.checklist li { margin-bottom: 0.5rem; }
+
+/* ==========================================================================
+   Contact page
+   ========================================================================== */
+.contact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.3fr;
+    gap: 2.5rem;
+}
+@media (max-width: 800px) {
+    .contact-grid { grid-template-columns: 1fr; }
+}
+
+/* ==========================================================================
+   Forms
+   ========================================================================== */
+.site-form { margin-top: 1.5rem; }
+.form-field { margin-bottom: 1.1rem; }
+.form-field label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+    font-size: 0.92rem;
+}
+.form-field .required { color: #C0392B; }
+.form-field input,
+.form-field select,
+.form-field textarea {
+    width: 100%;
+    padding: 0.65rem 0.8rem;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    font-family: var(--font-body);
+    font-size: 1rem;
+    background: white;
+}
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus {
+    outline: 3px solid var(--color-gold);
+    outline-offset: 1px;
+    border-color: var(--color-navy);
+}
+.form-field__help { font-size: 0.82rem; color: #6B7280; margin: 0.25rem 0 0; }
+.form-field__error { font-size: 0.82rem; color: #C0392B; margin: 0.25rem 0 0; }
+.form-field--error input,
+.form-field--error select,
+.form-field--error textarea { border-color: #C0392B; }
+
+/* Honeypot field: present in the DOM for bots to fill, invisible to
+   sighted users and skipped by screen readers/tab order. */
+input[name="website"] {
+    position: absolute !important;
+    left: -9999px !important;
+    width: 1px; height: 1px;
+    opacity: 0;
+}
+
+/* ==========================================================================
+   Homepage About preview
+   ========================================================================== */
+.about-preview { max-width: 720px; }
 
 /* ==========================================================================
    Footer

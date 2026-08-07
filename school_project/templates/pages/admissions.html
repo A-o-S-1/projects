@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Admissions — {{ school_info.school_name }}{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+    <div class="container">
+        <p class="eyebrow">Admissions</p>
+        <h1>Join {{ school_info.school_name }}</h1>
+        <p class="page-hero__lede">{{ admissions.intro }}</p>
+    </div>
+</section>
+
+{% if steps %}
+<section class="section">
+    <div class="container">
+        <h2>How to Apply</h2>
+        <ol class="step-list">
+            {% for step in steps %}
+            <li>
+                <span class="step-list__number">{{ forloop.counter }}</span>
+                <div>
+                    <h3>{{ step.title }}</h3>
+                    {% if step.description %}<p>{{ step.description }}</p>{% endif %}
+                </div>
+            </li>
+            {% endfor %}
+        </ol>
+    </div>
+</section>
+{% endif %}
+
+{% if admissions.requirements %}
+<section class="section section--muted">
+    <div class="container">
+        <h2>What You'll Need</h2>
+        <ul class="checklist">
+            {% for item in admissions.requirements_list %}
+            <li>{{ item }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+</section>
+{% endif %}
+
+<section class="section">
+    <div class="container container--narrow">
+        <h2>Submit an Inquiry</h2>
+        <p>Tell us about your child and we'll get in touch with next steps.</p>
+
+        <form method="post" novalidate class="site-form">
+            {% csrf_token %}
+            {{ form.website }}
+            {% include "partials/form_field.html" with field=form.parent_name %}
+            {% include "partials/form_field.html" with field=form.phone %}
+            {% include "partials/form_field.html" with field=form.email %}
+            {% include "partials/form_field.html" with field=form.child_name %}
+            {% include "partials/form_field.html" with field=form.level_applying_for %}
+            {% include "partials/form_field.html" with field=form.message %}
+            <button type="submit" class="btn btn--accent">Submit Inquiry</button>
+        </form>
+    </div>
+</section>
+{% endblock %}
