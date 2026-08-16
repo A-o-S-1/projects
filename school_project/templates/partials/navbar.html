@@ -20,9 +20,9 @@
                 <li><a href="{% url 'pages:admissions' %}">Admissions</a></li>
                 <li><a href="{% url 'staff:directory' %}">Staff Directory</a></li>
                 <li><a href="{% url 'staff:management' %}">Management</a></li>
-                <li><a href="#">Gallery</a></li>
-                <li><a href="#">News</a></li>
-                <li><a href="#">Events</a></li>
+                <li><a href="{% url 'gallery:gallery' %}">Gallery</a></li>
+                <li><a href="{% url 'news_events:news_list' %}">News</a></li>
+                <li><a href="{% url 'news_events:event_list' %}">Events</a></li>
                 <li><a href="{% url 'contact:contact' %}">Contact</a></li>
             </ul>
             {% if school_info.result_portal_url %}

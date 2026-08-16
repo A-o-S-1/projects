@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}News — {{ school_info.school_name }}{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+    <div class="container">
+        <p class="eyebrow">News</p>
+        <h1>What's Happening</h1>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        {% if posts %}
+        <div class="post-grid">
+            {% for post in posts %}
+            <article class="post-card">
+                <a href="{{ post.get_absolute_url }}" class="post-card__media">
+                    {% if post.cover_image %}
+                    <img src="{{ post.cover_image.url }}" alt="">
+                    {% else %}
+                    <div class="post-card__placeholder" aria-hidden="true">News</div>
+                    {% endif %}
+                </a>
+                <div class="post-card__body">
+                    <time datetime="{{ post.published_date|date:'Y-m-d' }}">{{ post.published_date|date:"F j, Y" }}</time>
+                    <h2><a href="{{ post.get_absolute_url }}">{{ post.title }}</a></h2>
+                    <p>{{ post.excerpt }}</p>
+                    <a href="{{ post.get_absolute_url }}" class="post-card__link">Read more &rarr;</a>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+
+        {% if is_paginated %}
+        <nav class="pagination" aria-label="News pages">
+            {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">&larr; Previous</a>{% endif %}
+            <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}">Next &rarr;</a>{% endif %}
+        </nav>
+        {% endif %}
+        {% else %}
+        <p class="empty-state">No news posts yet — check back soon.</p>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

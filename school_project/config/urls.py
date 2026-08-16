@@ -17,6 +17,8 @@ urlpatterns = [
     path("", include("apps.contact.urls")),
     path("", include("apps.academics.urls")),
     path("", include("apps.staff.urls")),
+    path("", include("apps.gallery.urls")),
+    path("", include("apps.news_events.urls")),
 ]
 
 # Serve user-uploaded media locally in development only. In production,

@@ -11,7 +11,7 @@
             <h1>{{ school_info.school_name }}</h1>
             <p class="hero__tagline">{{ school_info.tagline|default:"A nurturing home for academic and moral excellence." }}</p>
             <div class="hero__actions">
-                <a href="#" class="btn btn--accent">Apply for Admission</a>
+                <a href="{% url 'pages:admissions' %}" class="btn btn--accent">Apply for Admission</a>
                 {% if school_info.result_portal_url %}
                 <a href="{{ school_info.result_portal_url }}" class="btn btn--outline">Check Result</a>
                 {% endif %}
@@ -34,11 +34,53 @@
 </section>
 {% endif %}
 
+{% if latest_news %}
 <section class="section">
     <div class="container">
-        <p class="section-note">
-            Academics, Staff Directory, Gallery, News, and Events are added in the next build steps.
-        </p>
+        <div class="section-heading">
+            <h2>Latest News</h2>
+            <a href="{% url 'news_events:news_list' %}" class="section-heading__link">View all &rarr;</a>
+        </div>
+        <div class="post-grid">
+            {% for post in latest_news %}
+            <article class="post-card">
+                <a href="{{ post.get_absolute_url }}" class="post-card__media">
+                    {% if post.cover_image %}<img src="{{ post.cover_image.url }}" alt="">{% else %}<div class="post-card__placeholder" aria-hidden="true">News</div>{% endif %}
+                </a>
+                <div class="post-card__body">
+                    <time datetime="{{ post.published_date|date:'Y-m-d' }}">{{ post.published_date|date:"F j, Y" }}</time>
+                    <h2><a href="{{ post.get_absolute_url }}">{{ post.title }}</a></h2>
+                    <p>{{ post.excerpt }}</p>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
     </div>
 </section>
+{% endif %}
+
+{% if upcoming_events %}
+<section class="section section--muted">
+    <div class="container">
+        <div class="section-heading">
+            <h2>Upcoming Events</h2>
+            <a href="{% url 'news_events:event_list' %}" class="section-heading__link">View calendar &rarr;</a>
+        </div>
+        <div class="event-list">
+            {% for event in upcoming_events %}
+            <a href="{{ event.get_absolute_url }}" class="event-row">
+                <div class="event-row__date">
+                    <span class="event-row__day">{{ event.start_datetime|date:"d" }}</span>
+                    <span class="event-row__month">{{ event.start_datetime|date:"M" }}</span>
+                </div>
+                <div class="event-row__body">
+                    <h3>{{ event.title }}</h3>
+                    <p>{{ event.start_datetime|date:"g:i A" }}{% if event.location %} &middot; {{ event.location }}{% endif %}</p>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
 {% endblock %}

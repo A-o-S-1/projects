@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}{{ post.title }} — {{ school_info.school_name }}{% endblock %}
+
+{% block content %}
+<article class="section detail-page">
+    <div class="container container--narrow">
+        <a href="{% url 'news_events:news_list' %}" class="back-link">&larr; Back to News</a>
+        <p class="eyebrow">{{ post.published_date|date:"F j, Y" }}</p>
+        <h1>{{ post.title }}</h1>
+
+        {% if post.cover_image %}
+        <img src="{{ post.cover_image.url }}" alt="" class="detail-page__cover">
+        {% endif %}
+
+        <div class="prose">{{ post.body|linebreaksbr }}</div>
+    </div>
+</article>
+
+{% if recent_posts %}
+<section class="section section--muted">
+    <div class="container">
+        <h2>More News</h2>
+        <div class="post-grid">
+            {% for other in recent_posts %}
+            <article class="post-card">
+                <a href="{{ other.get_absolute_url }}" class="post-card__media">
+                    {% if other.cover_image %}<img src="{{ other.cover_image.url }}" alt="">{% else %}<div class="post-card__placeholder" aria-hidden="true">News</div>{% endif %}
+                </a>
+                <div class="post-card__body">
+                    <time datetime="{{ other.published_date|date:'Y-m-d' }}">{{ other.published_date|date:"F j, Y" }}</time>
+                    <h2><a href="{{ other.get_absolute_url }}">{{ other.title }}</a></h2>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+{% endblock %}

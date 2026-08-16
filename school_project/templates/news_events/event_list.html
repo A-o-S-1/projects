@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Events — {{ school_info.school_name }}{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+    <div class="container">
+        <p class="eyebrow">Events</p>
+        <h1>School Calendar</h1>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        <h2>Upcoming</h2>
+        {% if upcoming_events %}
+        <div class="event-list">
+            {% for event in upcoming_events %}
+            <a href="{{ event.get_absolute_url }}" class="event-row">
+                <div class="event-row__date">
+                    <span class="event-row__day">{{ event.start_datetime|date:"d" }}</span>
+                    <span class="event-row__month">{{ event.start_datetime|date:"M" }}</span>
+                </div>
+                <div class="event-row__body">
+                    <h3>{{ event.title }}</h3>
+                    <p>{{ event.start_datetime|date:"g:i A" }}{% if event.location %} &middot; {{ event.location }}{% endif %}</p>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="empty-state">No upcoming events scheduled right now — check back soon.</p>
+        {% endif %}
+    </div>
+</section>
+
+{% if past_events %}
+<section class="section section--muted">
+    <div class="container">
+        <h2>Past Events</h2>
+        <div class="event-list">
+            {% for event in past_events %}
+            <a href="{{ event.get_absolute_url }}" class="event-row event-row--past">
+                <div class="event-row__date">
+                    <span class="event-row__day">{{ event.start_datetime|date:"d" }}</span>
+                    <span class="event-row__month">{{ event.start_datetime|date:"M" }}</span>
+                </div>
+                <div class="event-row__body">
+                    <h3>{{ event.title }}</h3>
+                    <p>{{ event.start_datetime|date:"g:i A" }}{% if event.location %} &middot; {{ event.location }}{% endif %}</p>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+{% endblock %}

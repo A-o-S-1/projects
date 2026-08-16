@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}{{ event.title }} — {{ school_info.school_name }}{% endblock %}
+
+{% block content %}
+<article class="section detail-page">
+    <div class="container container--narrow">
+        <a href="{% url 'news_events:event_list' %}" class="back-link">&larr; Back to Events</a>
+        <p class="eyebrow">
+            {{ event.start_datetime|date:"F j, Y \a\t g:i A" }}
+            {% if event.location %} &middot; {{ event.location }}{% endif %}
+        </p>
+        <h1>{{ event.title }}</h1>
+
+        {% if event.cover_image %}
+        <img src="{{ event.cover_image.url }}" alt="" class="detail-page__cover">
+        {% endif %}
+
+        <div class="prose">{{ event.description|linebreaksbr }}</div>
+    </div>
+</article>
+{% endblock %}

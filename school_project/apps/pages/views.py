@@ -1,6 +1,9 @@
 from django.contrib import messages
 from django.urls import reverse_lazy
+from django.utils import timezone
 from django.views.generic import CreateView, TemplateView
+
+from apps.news_events.models import Event, NewsPost
 
 from .forms import AdmissionInquiryForm
 from .models import AboutPage, AdmissionsPage, AdmissionStep, CoreValue
@@ -14,6 +17,10 @@ class HomeView(TemplateView):
         # Homepage shows a short preview of About content rather than
         # duplicating it — one source of truth, per our earlier decision.
         context["about"] = AboutPage.load()
+        context["latest_news"] = NewsPost.published.all()[:3]
+        context["upcoming_events"] = [
+            e for e in Event.published.all() if e.start_datetime >= timezone.now()
+        ][:3]
         return context
 
 
