@@ -124,7 +124,8 @@ img { max-width: 100%; display: block; }
 .brand__text {
     font-family: var(--font-display);
     font-weight: 600;
-    font-size: 1.15rem;
+    font-size: 1.1rem;
+    white-space: nowrap;
 }
 
 .nav-toggle {
@@ -141,25 +142,26 @@ img { max-width: 100%; display: block; }
 .primary-nav {
     display: flex;
     align-items: center;
-    gap: 1.5rem;
+    gap: 1.1rem;
 }
 .primary-nav ul {
     list-style: none;
     display: flex;
-    gap: 1.25rem;
+    gap: 0.95rem;
     margin: 0;
     padding: 0;
 }
 .primary-nav a {
     color: rgba(255,255,255,0.88);
     text-decoration: none;
-    font-size: 0.95rem;
+    font-size: 0.88rem;
     font-weight: 500;
+    white-space: nowrap;
 }
 .primary-nav a:hover { color: var(--color-gold); }
 .nav-cta { padding: 0.5rem 1.1rem; }
 
-@media (max-width: 900px) {
+@media (max-width: 1100px) {
     .nav-toggle { display: flex; }
     .primary-nav {
         position: absolute;
@@ -389,6 +391,91 @@ input[name="website"] {
    Homepage About preview
    ========================================================================== */
 .about-preview { max-width: 720px; }
+
+/* ==========================================================================
+   Academics page
+   ========================================================================== */
+.department-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+.department-card {
+    background: white;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+}
+.department-card__desc { color: #6B7280; font-size: 0.92rem; }
+.department-card__level {
+    font-weight: 700;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-navy);
+    margin: 1rem 0 0.5rem;
+}
+.subject-list { list-style: none; padding: 0; margin: 0; }
+.subject-list li {
+    padding: 0.3rem 0;
+    border-bottom: 1px dashed var(--color-border);
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.subject-list li:last-child { border-bottom: none; }
+.tag {
+    font-size: 0.7rem;
+    background: rgba(47,82,51,0.1);
+    color: var(--color-green);
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+/* ==========================================================================
+   Staff Directory / Management pages
+   ========================================================================== */
+.staff-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.75rem;
+}
+.staff-grid--management { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.staff-card {
+    background: white;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    text-align: center;
+}
+.staff-card__photo { margin-bottom: 1rem; }
+.staff-card__photo img {
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-inline: auto;
+    border: 3px solid var(--color-cream);
+    outline: 1px solid var(--color-border);
+}
+.staff-card__placeholder {
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    background: var(--color-navy);
+    color: var(--color-gold);
+    font-family: var(--font-display);
+    font-size: 2.2rem;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    margin-inline: auto;
+}
+.staff-card h3 { margin-bottom: 0.15rem; font-size: 1.05rem; }
+.staff-card__role { color: var(--color-gold); font-weight: 600; font-size: 0.85rem; margin: 0 0 0.5rem; }
+.staff-card__dept { color: #6B7280; font-size: 0.82rem; margin: -0.35rem 0 0.5rem; }
+.staff-card__bio { font-size: 0.88rem; color: #4B5563; }
 
 /* ==========================================================================
    Footer

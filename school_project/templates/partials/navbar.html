@@ -16,9 +16,10 @@
             <ul>
                 <li><a href="{% url 'pages:home' %}">Home</a></li>
                 <li><a href="{% url 'pages:about' %}">About</a></li>
-                <li><a href="#">Academics</a></li>
+                <li><a href="{% url 'academics:academics' %}">Academics</a></li>
                 <li><a href="{% url 'pages:admissions' %}">Admissions</a></li>
-                <li><a href="#">Staff Directory</a></li>
+                <li><a href="{% url 'staff:directory' %}">Staff Directory</a></li>
+                <li><a href="{% url 'staff:management' %}">Management</a></li>
                 <li><a href="#">Gallery</a></li>
                 <li><a href="#">News</a></li>
                 <li><a href="#">Events</a></li>

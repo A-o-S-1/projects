@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Staff Directory — {{ school_info.school_name }}{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+    <div class="container">
+        <p class="eyebrow">Our People</p>
+        <h1>Staff Directory</h1>
+        <p class="page-hero__lede">Meet the teaching and support staff at {{ school_info.school_name }}.</p>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        <div class="staff-grid">
+            {% for person in staff_members %}
+            {% include "partials/staff_card.html" with person=person %}
+            {% empty %}
+            <p>Staff profiles are being added — check back soon.</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}

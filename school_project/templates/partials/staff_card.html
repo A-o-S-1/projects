@@ -1,0 +1,14 @@
+{% comment %}Usage: {% include "partials/staff_card.html" with person=staff_member %}{% endcomment %}
+<div class="staff-card">
+    <div class="staff-card__photo">
+        {% if person.photo %}
+        <img src="{{ person.photo.url }}" alt="{{ person.full_name }}">
+        {% else %}
+        <div class="staff-card__placeholder" aria-hidden="true">{{ person.initials }}</div>
+        {% endif %}
+    </div>
+    <h3>{{ person.full_name }}</h3>
+    <p class="staff-card__role">{{ person.role_title }}</p>
+    {% if person.department %}<p class="staff-card__dept">{{ person.department.name }}</p>{% endif %}
+    {% if person.bio %}<p class="staff-card__bio">{{ person.bio }}</p>{% endif %}
+</div>

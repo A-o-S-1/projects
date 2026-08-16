@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Academics — {{ school_info.school_name }}{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+    <div class="container">
+        <p class="eyebrow">Academics</p>
+        <h1>Our Curriculum</h1>
+        <p class="page-hero__lede">{{ academics_page.intro }}</p>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container prose-grid">
+        <article>
+            <h2>Junior Secondary (JSS1–JSS3)</h2>
+            <p>{{ academics_page.junior_secondary_overview|linebreaksbr }}</p>
+        </article>
+        <article>
+            <h2>Senior Secondary (SS1–SS3)</h2>
+            <p>{{ academics_page.senior_secondary_overview|linebreaksbr }}</p>
+        </article>
+    </div>
+</section>
+
+<section class="section section--muted">
+    <div class="container">
+        <h2>Departments &amp; Subjects</h2>
+        <div class="department-grid">
+            {% for department in departments %}
+            <div class="department-card">
+                <h3>{{ department.name }}</h3>
+                {% if department.description %}<p class="department-card__desc">{{ department.description }}</p>{% endif %}
+
+                {% regroup department.subjects.all by level as level_list %}
+                {% for level_group in level_list %}
+                <p class="department-card__level">{% if level_group.grouper == "junior" %}Junior Secondary{% else %}Senior Secondary{% endif %}</p>
+                <ul class="subject-list">
+                    {% for subject in level_group.list %}
+                    <li>
+                        {{ subject.name }}
+                        {% if subject.track and subject.track != "core" %}<span class="tag">{{ subject.get_track_display }}</span>{% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% endfor %}
+            </div>
+            {% empty %}
+            <p>Department and subject details are being finalized — check back soon.</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}
