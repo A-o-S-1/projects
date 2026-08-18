@@ -5,6 +5,7 @@
     --color-navy: #16213E;
     --color-navy-light: #24345C;
     --color-gold: #C99A3E;
+    --color-gold-text: #8a6a1f; /* darker gold — passes WCAG AA (4.5:1) as text on light backgrounds; the brighter --color-gold stays reserved for dark backgrounds and non-text uses (buttons, borders) */
     --color-cream: #FAF8F3;
     --color-ink: #1F2430;
     --color-green: #2F5233;
@@ -44,6 +45,16 @@ h1, h2, h3, h4 {
 
 a { color: var(--color-navy); }
 img { max-width: 100%; display: block; }
+
+/* Consistent, visible keyboard focus indicator site-wide — matches the
+   gold accent so it reads as intentional rather than a leftover browser
+   default, while remaining highly visible on both navy and light backgrounds. */
+a:focus-visible,
+button:focus-visible {
+    outline: 3px solid var(--color-gold);
+    outline-offset: 2px;
+    border-radius: 2px;
+}
 
 .container {
     max-width: var(--container-width);
@@ -159,7 +170,18 @@ img { max-width: 100%; display: block; }
     white-space: nowrap;
 }
 .primary-nav a:hover { color: var(--color-gold); }
+.primary-nav a.is-active {
+    color: var(--color-gold);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
 .nav-cta { padding: 0.5rem 1.1rem; }
+/* .primary-nav a sets link color by class+descendant, which has higher
+   specificity than .btn--accent alone — without this rule the CTA
+   button's text silently inherited the navbar's near-white link color
+   instead of navy, making it nearly unreadable against the gold
+   background (caught by accessibility audit, not visible at a glance). */
+.primary-nav a.nav-cta { color: var(--color-navy); }
 
 @media (max-width: 1100px) {
     .nav-toggle { display: flex; }
@@ -199,9 +221,14 @@ img { max-width: 100%; display: block; }
     text-transform: uppercase;
     letter-spacing: 0.12em;
     font-size: 0.8rem;
-    color: var(--color-gold);
+    color: var(--color-gold-text);
     font-weight: 600;
     margin: 0 0 0.75rem;
+}
+/* On navy backgrounds the brighter gold passes contrast fine and reads
+   better than the darker text-safe variant, so it's restored here. */
+.hero .eyebrow, .page-hero .eyebrow {
+    color: var(--color-gold);
 }
 .hero h1 { color: white; font-size: clamp(2rem, 4vw, 3rem); }
 .hero__tagline { max-width: 46ch; color: rgba(255,255,255,0.85); font-size: 1.1rem; }
@@ -472,8 +499,8 @@ input[name="website"] {
     display: flex; align-items: center; justify-content: center;
     margin-inline: auto;
 }
-.staff-card h3 { margin-bottom: 0.15rem; font-size: 1.05rem; }
-.staff-card__role { color: var(--color-gold); font-weight: 600; font-size: 0.85rem; margin: 0 0 0.5rem; }
+.staff-card h2 { margin-bottom: 0.15rem; font-size: 1.05rem; }
+.staff-card__role { color: var(--color-gold-text); font-weight: 600; font-size: 0.85rem; margin: 0 0 0.5rem; }
 .staff-card__dept { color: #6B7280; font-size: 0.82rem; margin: -0.35rem 0 0.5rem; }
 .staff-card__bio { font-size: 0.88rem; color: #4B5563; }
 
@@ -495,7 +522,7 @@ input[name="website"] {
 .site-footer__brand { font-size: 1.25rem; }
 .footer-list { list-style: none; padding: 0; margin: 0; }
 .footer-list li { margin-bottom: 0.4rem; }
-.footer-list a { color: rgba(255,255,255,0.85); }
+.site-footer .footer-list a { color: rgba(255,255,255,0.85); }
 .site-footer__bottom {
     border-top: 1px solid rgba(255,255,255,0.12);
     padding-block: 1.25rem;
@@ -522,7 +549,7 @@ input[name="website"] {
     color: var(--color-navy);
     white-space: nowrap;
 }
-.section-heading__link:hover { color: var(--color-gold); }
+.section-heading__link:hover { color: var(--color-gold-text); text-decoration: underline; }
 
 /* ==========================================================================
    Empty state
@@ -544,7 +571,7 @@ input[name="website"] {
     color: var(--color-navy);
     font-size: 0.9rem;
 }
-.back-link:hover { color: var(--color-gold); }
+.back-link:hover { color: var(--color-gold-text); text-decoration: underline; }
 
 /* ==========================================================================
    Gallery
@@ -628,7 +655,7 @@ input[name="website"] {
     font-family: var(--font-display);
 }
 .post-card__body { padding: 1.25rem; }
-.post-card__body time { font-size: 0.8rem; color: var(--color-gold); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+.post-card__body time { font-size: 0.8rem; color: var(--color-gold-text); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
 .post-card__body h2 { font-size: 1.1rem; margin: 0.4rem 0 0.5rem; }
 .post-card__body h2 a { text-decoration: none; color: var(--color-navy); }
 .post-card__body p { font-size: 0.92rem; color: #4B5563; margin: 0; }
@@ -648,7 +675,13 @@ input[name="website"] {
     padding: 1rem 1.25rem;
     text-decoration: none;
 }
-.event-row--past { opacity: 0.65; }
+/* Previously used opacity:0.65 to visually mute past events, but that
+   also washed out the body text below the WCAG AA contrast threshold.
+   Muting just the date badge (which is large, bold text — 3:1 minimum)
+   preserves the "past" visual cue without touching the smaller,
+   already-compliant body text. */
+.event-row--past { background: #FAFAFA; }
+.event-row--past .event-row__date { background: #6B7280; }
 .event-row__date {
     flex-shrink: 0;
     width: 60px;
@@ -676,8 +709,12 @@ input[name="website"] {
 .prose { line-height: 1.75; color: #374151; }
 
 /* ==========================================================================
-   Pagination
+   Error pages (404)
    ========================================================================== */
+.error-page { text-align: center; padding-block: 5rem; }
+.error-page h1 { font-size: 2rem; }
+.error-page p { color: #4B5563; max-width: 50ch; margin: 0 auto 1.5rem; }
+.error-page .btn { margin-top: 0.5rem; }
 .pagination {
     display: flex;
     align-items: center;

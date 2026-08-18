@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<!--
+Deliberately NOT extending base.html: base.html's navbar/footer depend on
+the SchoolInfo context processor, which queries the database. If the
+database itself is the cause of the 500 error, a template that also
+queries it would fail to render too, and Django would fall back to a
+bare, unstyled error page. This page is fully self-contained (inline
+CSS, no DB, no static file dependency) so it always renders.
+-->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Something Went Wrong</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #16213E; color: white; margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 2rem; box-sizing: border-box; }
+        .box { max-width: 480px; }
+        p.eyebrow { color: #C99A3E; text-transform: uppercase; letter-spacing: 0.12em; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; }
+        h1 { font-size: 1.75rem; margin: 0 0 1rem; }
+        p { color: rgba(255,255,255,0.85); line-height: 1.6; }
+        a { display: inline-block; margin-top: 1.5rem; padding: 0.75rem 1.5rem; background: #C99A3E; color: #16213E; text-decoration: none; font-weight: 600; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <p class="eyebrow">500</p>
+        <h1>Something Went Wrong</h1>
+        <p>We're experiencing a technical issue. Please try again shortly, or contact the school office if this continues.</p>
+        <a href="/">Back to Homepage</a>
+    </div>
+</body>
+</html>

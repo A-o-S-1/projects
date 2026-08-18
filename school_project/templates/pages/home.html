@@ -44,7 +44,7 @@
         <div class="post-grid">
             {% for post in latest_news %}
             <article class="post-card">
-                <a href="{{ post.get_absolute_url }}" class="post-card__media">
+                <a href="{{ post.get_absolute_url }}" class="post-card__media" aria-label="{{ post.title }}">
                     {% if post.cover_image %}<img src="{{ post.cover_image.url }}" alt="">{% else %}<div class="post-card__placeholder" aria-hidden="true">News</div>{% endif %}
                 </a>
                 <div class="post-card__body">

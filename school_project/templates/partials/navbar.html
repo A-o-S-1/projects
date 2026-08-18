@@ -1,4 +1,4 @@
-{% load static %}
+{% load static nav_tags %}
 <header class="site-header">
     <div class="container site-header__inner">
         <a href="{% url 'pages:home' %}" class="brand">
@@ -14,16 +14,16 @@
 
         <nav id="primary-nav" class="primary-nav">
             <ul>
-                <li><a href="{% url 'pages:home' %}">Home</a></li>
-                <li><a href="{% url 'pages:about' %}">About</a></li>
-                <li><a href="{% url 'academics:academics' %}">Academics</a></li>
-                <li><a href="{% url 'pages:admissions' %}">Admissions</a></li>
-                <li><a href="{% url 'staff:directory' %}">Staff Directory</a></li>
-                <li><a href="{% url 'staff:management' %}">Management</a></li>
-                <li><a href="{% url 'gallery:gallery' %}">Gallery</a></li>
-                <li><a href="{% url 'news_events:news_list' %}">News</a></li>
-                <li><a href="{% url 'news_events:event_list' %}">Events</a></li>
-                <li><a href="{% url 'contact:contact' %}">Contact</a></li>
+                <li><a href="{% url 'pages:home' %}" class="{% nav_active 'pages:home' %}" {% nav_aria_current 'pages:home' %}>Home</a></li>
+                <li><a href="{% url 'pages:about' %}" class="{% nav_active 'pages:about' %}" {% nav_aria_current 'pages:about' %}>About</a></li>
+                <li><a href="{% url 'academics:academics' %}" class="{% nav_active 'academics:academics' %}" {% nav_aria_current 'academics:academics' %}>Academics</a></li>
+                <li><a href="{% url 'pages:admissions' %}" class="{% nav_active 'pages:admissions' %}" {% nav_aria_current 'pages:admissions' %}>Admissions</a></li>
+                <li><a href="{% url 'staff:directory' %}" class="{% nav_active 'staff:directory' %}" {% nav_aria_current 'staff:directory' %}>Staff Directory</a></li>
+                <li><a href="{% url 'staff:management' %}" class="{% nav_active 'staff:management' %}" {% nav_aria_current 'staff:management' %}>Management</a></li>
+                <li><a href="{% url 'gallery:gallery' %}" class="{% nav_active 'gallery:gallery' %}" {% nav_aria_current 'gallery:gallery' %}>Gallery</a></li>
+                <li><a href="{% url 'news_events:news_list' %}" class="{% nav_active 'news_events:news_list' %}" {% nav_aria_current 'news_events:news_list' %}>News</a></li>
+                <li><a href="{% url 'news_events:event_list' %}" class="{% nav_active 'news_events:event_list' %}" {% nav_aria_current 'news_events:event_list' %}>Events</a></li>
+                <li><a href="{% url 'contact:contact' %}" class="{% nav_active 'contact:contact' %}" {% nav_aria_current 'contact:contact' %}>Contact</a></li>
             </ul>
             {% if school_info.result_portal_url %}
             <a href="{{ school_info.result_portal_url }}" class="btn btn--accent nav-cta">Check Result</a>

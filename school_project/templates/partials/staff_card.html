@@ -7,7 +7,7 @@
         <div class="staff-card__placeholder" aria-hidden="true">{{ person.initials }}</div>
         {% endif %}
     </div>
-    <h3>{{ person.full_name }}</h3>
+    <h2>{{ person.full_name }}</h2>
     <p class="staff-card__role">{{ person.role_title }}</p>
     {% if person.department %}<p class="staff-card__dept">{{ person.department.name }}</p>{% endif %}
     {% if person.bio %}<p class="staff-card__bio">{{ person.bio }}</p>{% endif %}

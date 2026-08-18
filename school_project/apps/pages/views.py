@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.http import HttpResponse
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.views.generic import CreateView, TemplateView
@@ -58,3 +59,17 @@ class AdmissionsView(CreateView):
             "Thank you — your inquiry has been received. Our admissions office will contact you shortly.",
         )
         return response
+
+
+def robots_txt(request):
+    """
+    Plain-text robots.txt. Kept as a tiny view instead of a static file so
+    the Sitemap: line always points at the correct host automatically.
+    """
+    lines = [
+        "User-agent: *",
+        "Allow: /",
+        "Disallow: /admin/",
+        f"Sitemap: {request.scheme}://{request.get_host()}/sitemap.xml",
+    ]
+    return HttpResponse("\n".join(lines), content_type="text/plain")

@@ -8,4 +8,5 @@ urlpatterns = [
     path("", views.HomeView.as_view(), name="home"),
     path("about/", views.AboutView.as_view(), name="about"),
     path("admissions/", views.AdmissionsView.as_view(), name="admissions"),
+    path("robots.txt", views.robots_txt, name="robots_txt"),
 ]
