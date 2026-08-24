@@ -1,0 +1,132 @@
+/* ========================================================================
+   Public Result Portal
+   ======================================================================== */
+.result-lookup { padding-block: 4.5rem; }
+.result-lookup__card {
+    max-width: 620px;
+    margin: 0 auto;
+    background: white;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: clamp(1.5rem, 4vw, 2.5rem);
+    box-shadow: 0 12px 30px rgba(22, 33, 62, 0.08);
+}
+.result-lookup__intro { max-width: 52ch; color: #5f6673; }
+.result-lookup__form { margin-top: 2rem; }
+.result-lookup__form > div { margin: 0 0 1.1rem; }
+.result-lookup__form label { display: block; font-weight: 600; margin-bottom: 0.4rem; }
+.result-lookup__form input,
+.result-lookup__form select {
+    width: 100%;
+    min-height: 48px;
+    border: 1px solid #cfc9bd;
+    border-radius: 7px;
+    padding: 0.7rem 0.8rem;
+    font: inherit;
+    background: white;
+}
+.result-lookup__form input:focus,
+.result-lookup__form select:focus {
+    outline: 3px solid rgba(201,154,62,0.35);
+    border-color: var(--color-gold-text);
+}
+.result-lookup__errors {
+    margin: 0 0 1.25rem;
+    padding: 0.9rem 1rem;
+    border-left: 4px solid #a33a2b;
+    background: #fff4f2;
+    color: #6d2118;
+    border-radius: 4px;
+}
+.result-lookup__errors p { margin: 0; }
+.field-error { margin: 0.35rem 0 0; color: #8b2c21; font-size: 0.85rem; }
+.result-lookup__help {
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--color-border);
+    color: #656b76;
+    font-size: 0.9rem;
+}
+.result-lookup__honeypot {
+    position: absolute !important;
+    left: -10000px !important;
+    width: 1px !important;
+    height: 1px !important;
+    overflow: hidden !important;
+}
+
+.result-sheet { padding-block: 2.5rem; }
+.result-sheet__actions {
+    display: flex;
+    gap: .75rem;
+    justify-content: flex-end;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+.result-sheet__paper {
+    background: white;
+    border: 1px solid var(--color-border);
+    padding: clamp(1rem, 3vw, 2rem);
+    border-radius: var(--radius);
+}
+.result-sheet__header {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 1rem;
+    align-items: center;
+    border-bottom: 2px solid var(--color-navy);
+    padding-bottom: 1rem;
+}
+.result-sheet__header img { width: 80px; height: 80px; object-fit: contain; }
+.result-sheet__school { text-align: center; }
+.result-sheet__school h1 { font-size: clamp(1.35rem, 3vw, 2rem); margin-bottom: .25rem; }
+.result-sheet__school p { margin: .15rem 0; }
+.result-sheet__student {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: .5rem 1rem;
+    margin: 1.25rem 0;
+}
+.result-sheet__student div { padding: .5rem; background: var(--color-cream); }
+.result-sheet__student strong,
+.result-summary strong {
+    display: block;
+    font-size: .78rem;
+    text-transform: uppercase;
+    color: #68707c;
+}
+.result-table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+.result-table th,
+.result-table td { border: 1px solid #d8d3c8; padding: .55rem .45rem; text-align: center; }
+.result-table th:first-child,
+.result-table td:first-child { text-align: left; }
+.result-summary { margin-top: 1rem; display: grid; grid-template-columns: repeat(4, 1fr); gap: .75rem; }
+.result-summary div { border: 1px solid var(--color-border); padding: .8rem; }
+.result-ratings { margin-top: 1.5rem; }
+.result-ratings h2 { font-size: 1.25rem; }
+.result-ratings__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.result-remarks { margin-top: 1.5rem; display: grid; gap: 1rem; }
+.result-remarks div { border: 1px solid var(--color-border); padding: .9rem; }
+.result-remarks strong { display: block; margin-bottom: .3rem; }
+
+@media (max-width: 700px) {
+    .result-sheet__header { grid-template-columns: 1fr; text-align: center; }
+    .result-sheet__header img { margin: auto; }
+    .result-sheet__student,
+    .result-summary,
+    .result-ratings__grid { grid-template-columns: 1fr; }
+    .result-table { font-size: .75rem; }
+    .result-table th,
+    .result-table td { padding: .4rem .25rem; }
+}
+
+@media print {
+    .site-header,
+    .site-footer,
+    .skip-link,
+    .result-sheet__actions { display: none !important; }
+    body { background: white; }
+    .result-sheet { padding: 0; }
+    .result-sheet__paper { border: 0; padding: 0; }
+    @page { margin: 12mm; }
+}

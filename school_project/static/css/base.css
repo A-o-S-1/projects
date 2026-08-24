@@ -725,3 +725,117 @@ input[name="website"] {
 }
 .pagination a { color: var(--color-navy); font-weight: 600; text-decoration: none; }
 .pagination span { color: #6B7280; }
+
+/* ==========================================================================
+   Result lookup page
+   ========================================================================== */
+.lookup-help {
+    margin-top: 2.5rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--color-border);
+}
+.lookup-help h2 { font-size: 1.1rem; }
+.lookup-help p { color: #4B5563; font-size: 0.92rem; }
+
+/* ==========================================================================
+   Result sheet (the "report card")
+   ========================================================================== */
+.result-sheet {
+    background: white;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 2rem;
+    max-width: 900px;
+    margin: 0 auto;
+}
+.result-sheet__header {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    border-bottom: 2px solid var(--color-navy);
+    padding-bottom: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+.result-sheet__crest { width: 64px; height: 64px; }
+.result-sheet__header h2 { margin: 0; font-size: 1.3rem; }
+.result-sheet__header p { margin: 0.15rem 0 0; color: #6B7280; font-size: 0.88rem; }
+
+.result-info-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 2rem;
+    font-size: 0.92rem;
+}
+.result-info-table th, .result-info-table td {
+    border: 1px solid var(--color-border);
+    padding: 0.55rem 0.75rem;
+    text-align: left;
+}
+.result-info-table th { background: #FAF8F3; width: 20%; font-weight: 600; color: var(--color-navy); }
+
+.result-sheet__section-title {
+    margin-top: 2rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.table-scroll { overflow-x: auto; }
+.result-subjects-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+    min-width: 640px;
+}
+.result-subjects-table th, .result-subjects-table td {
+    border: 1px solid var(--color-border);
+    padding: 0.5rem 0.6rem;
+    text-align: center;
+}
+.result-subjects-table th { background: var(--color-navy); color: white; font-weight: 600; font-size: 0.78rem; }
+.result-subjects-table td.align-left { text-align: left; }
+.result-subjects-table tbody tr:nth-child(even) { background: #FAF8F3; }
+
+.psychomotor-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+.psychomotor-grid h4 { font-size: 0.95rem; margin-bottom: 0.5rem; }
+.result-psychomotor-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.result-psychomotor-table td {
+    border: 1px solid var(--color-border);
+    padding: 0.4rem 0.6rem;
+}
+.result-psychomotor-table td:last-child { width: 50px; text-align: center; font-weight: 600; }
+.result-psychomotor-table td.align-left { text-align: left; }
+
+.result-sheet__key { font-size: 0.8rem; color: #6B7280; font-style: italic; margin-top: 0.75rem; }
+
+.result-remarks {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--color-border);
+    font-size: 0.92rem;
+}
+.result-remarks p { margin: 0 0 0.6rem; }
+
+.result-actions {
+    max-width: 900px;
+    margin: 1.5rem auto 0;
+    display: flex;
+    gap: 1rem;
+}
+
+@media (max-width: 700px) {
+    .psychomotor-grid { grid-template-columns: 1fr; }
+    .result-sheet { padding: 1.25rem; }
+}
+
+/* Print-optimized: hide site chrome, show only the result sheet itself. */
+@media print {
+    .site-header, .site-footer, .result-actions, .skip-link { display: none !important; }
+    body { background: white; }
+    .result-sheet { border: none; padding: 0; max-width: 100%; }
+    .section { padding: 0; }
+}

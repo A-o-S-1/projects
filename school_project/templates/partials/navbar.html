@@ -25,9 +25,7 @@
                 <li><a href="{% url 'news_events:event_list' %}" class="{% nav_active 'news_events:event_list' %}" {% nav_aria_current 'news_events:event_list' %}>Events</a></li>
                 <li><a href="{% url 'contact:contact' %}" class="{% nav_active 'contact:contact' %}" {% nav_aria_current 'contact:contact' %}>Contact</a></li>
             </ul>
-            {% if school_info.result_portal_url %}
-            <a href="{{ school_info.result_portal_url }}" class="btn btn--accent nav-cta">Check Result</a>
-            {% endif %}
+            <a href="{% url 'results:check' %}" class="btn btn--accent nav-cta">Check Result</a>
         </nav>
     </div>
 </header>

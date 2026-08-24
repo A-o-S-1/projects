@@ -72,6 +72,13 @@ python manage.py collectstatic --noinput
 
 Re-run this every time you deploy new CSS/JS/image changes.
 
+**Same requirement applies to running the automated tests.** Django's test
+runner always forces `DEBUG=False` internally, regardless of your settings
+file — so `python manage.py test` hits the exact same "no static manifest"
+error described above if `collectstatic` hasn't been run at least once.
+Run `python manage.py collectstatic --noinput` before `python manage.py test`
+in any fresh environment (a new dev machine, CI, etc.).
+
 ## 7. Run with Gunicorn (if self-hosting, not using a PaaS)
 
 ```bash
