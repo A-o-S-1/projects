@@ -19,7 +19,7 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from apps.academics.models import AcademicsPage, Department, Subject
-from apps.gallery.models import GalleryImage
+from apps.gallery.models import GalleryAlbum, GalleryPhoto
 from apps.news_events.models import Event, NewsPost
 from apps.pages.models import (
     AboutPage,
@@ -213,6 +213,32 @@ class Command(BaseCommand):
         mathematics = Department.objects.filter(name="Mathematics").first()
         languages = Department.objects.filter(name="Languages").first()
 
+        # Real: the founder — the Bishop of Ogoja, under whose permission the
+        # school was established (see About page history). Placed first in
+        # display order, above the Administrator.
+        StaffMember.objects.get_or_create(
+            full_name="Most Rev. Dr. Donatus Edet Akpan",
+            defaults={
+                "role_title": "Bishop of Ogoja & Founder",
+                "category": "management",
+                "bio": (
+                    "Most Rev. Dr. Donatus Edet Akpan has served as Bishop of the Roman Catholic "
+                    "Diocese of Ogoja since 2017. Born in 1952 in Ikat Ada Utor, within the Diocese "
+                    "of Ikot Ekpene, he began his formation for the priesthood at Queen of Angels "
+                    "Minor Seminary before continuing his studies at Bigard Memorial Seminary and "
+                    "St. Joseph Major Seminary, both in Enugu. He was ordained a priest in October "
+                    "1985 and later undertook advanced studies in biblical theology at the "
+                    "University of Nigeria, Nsukka. Before his appointment as bishop, much of his "
+                    "priestly ministry was spent serving the Roman Catholic Archdiocese of Abuja, "
+                    "including a period as rector. He was appointed Bishop of Ogoja in April 2017 "
+                    "and formally ordained to the role that July. It was under his permission that "
+                    "Mater Domini Schools was established by the Diocese of Ogoja, and he remains "
+                    "a guiding figure in the school's mission and identity."
+                ),
+                "order": 0,
+            },
+        )
+
         # Real: the Administrator, whose message we already have from About.
         StaffMember.objects.get_or_create(
             full_name="Rev. Fr. Peter Ogar Ibu",
@@ -220,7 +246,7 @@ class Command(BaseCommand):
                 "role_title": "School Administrator",
                 "category": "management",
                 "bio": "Oversees the overall direction, mission, and daily operations of the school.",
-                "order": 0,
+                "order": 1,
             },
         )
 
@@ -256,18 +282,22 @@ class Command(BaseCommand):
             )
 
     def seed_gallery(self):
-        entries = [
-            ("Front Gate & Signage", "campus", "The school entrance along the Ogboja road."),
-            ("Classroom Block", "campus", "One of the Junior Secondary classroom blocks."),
-            ("Science Practical Session", "academics", "Students during a Basic Science practical."),
-            ("Inter-House Sports", "sports", "Annual inter-house sports competition."),
-            ("Cultural Day", "events", "Students in traditional attire for Cultural Day."),
-            ("Sunday Mass", "spiritual", "The school community at weekly Mass."),
+        # (title, category, caption, photo_count) — Cultural Day gets several
+        # photos to demonstrate the slideshow with more than one slide.
+        albums = [
+            ("Front Gate & Signage", "campus", "The school entrance along the Ogboja road.", 1),
+            ("Classroom Block", "campus", "One of the Junior Secondary classroom blocks.", 2),
+            ("Science Practical Session", "academics", "Students during a Basic Science practical.", 2),
+            ("Inter-House Sports", "sports", "Annual inter-house sports competition.", 3),
+            ("Cultural Day", "events", "Students in traditional attire for Cultural Day.", 4),
+            ("Sunday Mass", "spiritual", "The school community at weekly Mass.", 2),
         ]
-        for i, (title, category, caption) in enumerate(entries):
-            GalleryImage.objects.get_or_create(
+        for i, (title, category, caption, photo_count) in enumerate(albums):
+            album, _ = GalleryAlbum.objects.get_or_create(
                 title=title, defaults={"category": category, "caption": caption, "order": i}
             )
+            for p in range(photo_count):
+                GalleryPhoto.objects.get_or_create(album=album, order=p)
 
     def seed_news(self):
         today = timezone.now().date()

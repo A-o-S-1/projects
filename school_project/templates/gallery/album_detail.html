@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ album.title }} — Gallery — {{ school_info.school_name }}{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+    <div class="container">
+        <p class="eyebrow">{{ album.get_category_display }}</p>
+        <h1>{{ album.title }}</h1>
+        {% if album.description %}<p class="page-hero__lede">{{ album.description }}</p>{% endif %}
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        <p><a href="{% url 'gallery:gallery' %}" class="section-heading__link">&larr; Back to Gallery</a></p>
+
+        {% with photos=album.images.all %}
+        {% if photos %}
+        <div class="gallery-slideshow" data-slideshow>
+            <div class="gallery-slideshow__stage">
+                {% for photo in photos %}
+                <figure class="gallery-slide {% if forloop.first %}is-active{% endif %}" data-slide aria-hidden="{% if not forloop.first %}true{% else %}false{% endif %}">
+                    {% if photo.image %}
+                    <img src="{{ photo.image.url }}" alt="{% if photo.caption %}{{ photo.caption }}{% else %}{{ album.title }} — photo {{ forloop.counter }}{% endif %}">
+                    {% else %}
+                    <div class="gallery-tile__placeholder" aria-hidden="true"><span>Photo unavailable</span></div>
+                    {% endif %}
+                    {% if photo.caption %}<figcaption>{{ photo.caption }}</figcaption>{% endif %}
+                </figure>
+                {% endfor %}
+
+                {% if photos|length > 1 %}
+                <button type="button" class="gallery-slideshow__control gallery-slideshow__control--prev" data-slide-prev aria-label="Previous photo">&#10094;</button>
+                <button type="button" class="gallery-slideshow__control gallery-slideshow__control--next" data-slide-next aria-label="Next photo">&#10095;</button>
+                {% endif %}
+            </div>
+
+            {% if photos|length > 1 %}
+            <div class="gallery-slideshow__footer">
+                <span data-slide-counter>1 / {{ photos|length }}</span>
+                <div class="gallery-slideshow__dots" aria-label="Choose a photo">
+                    {% for photo in photos %}
+                    <button type="button" class="gallery-slideshow__dot {% if forloop.first %}is-active{% endif %}" data-slide-dot="{{ forloop.counter0 }}" aria-label="Show photo {{ forloop.counter }}" aria-current="{% if forloop.first %}true{% else %}false{% endif %}"></button>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% else %}
+        <p class="empty-state">Photos for this album are being added — check back soon.</p>
+        {% endif %}
+        {% endwith %}
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/gallery.js' %}" defer></script>
+{% endblock %}
