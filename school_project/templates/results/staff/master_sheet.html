@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% load result_extras %}
+
+{% block title %}Class Master Sheet — Staff Tools{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+    <div class="container">
+        <p class="eyebrow">Staff Tools</p>
+        <h1>Class Master Sheet</h1>
+        <p class="page-hero__lede">A printable broadsheet of every student's scores for one class and term.</p>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        <form method="get" class="site-form site-form--inline">
+            {% include "partials/form_field.html" with field=form.term %}
+            {% include "partials/form_field.html" with field=form.classroom %}
+            <button type="submit" class="btn btn--accent">Generate</button>
+        </form>
+
+        {% if students %}
+        <div class="master-sheet-actions">
+            <button type="button" class="btn btn--outline-dark" onclick="window.print()">Print This Sheet</button>
+        </div>
+
+        <h2>{{ classroom.name }} — {{ term }}</h2>
+
+        {% if students %}
+        <div class="master-sheet-scroll">
+            <table class="master-sheet-table">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Admission No.</th>
+                        {% for subject in subjects %}<th>{{ subject.name }}</th>{% endfor %}
+                        <th>Total</th>
+                        <th>Average</th>
+                        <th>Position</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students %}
+                    <tr>
+                        <td>{{ student.full_name }}</td>
+                        <td>{{ student.admission_number }}</td>
+                        {% for subject in subjects %}
+                        <td>
+                            {% with entry=entries_by_student|get_item:student.id %}
+                                {% with score_entry=entry.entries|get_item:subject.id %}
+                                    {% if score_entry %}{{ score_entry.total_score }}{% else %}—{% endif %}
+                                {% endwith %}
+                            {% endwith %}
+                        </td>
+                        {% endfor %}
+                        {% with row=entries_by_student|get_item:student.id %}
+                        <td>{{ row.term_result.overall_total|default:"—" }}</td>
+                        <td>{{ row.term_result.average|default:"—" }}</td>
+                        <td>{{ row.term_result.position_in_class|default:"—" }}</td>
+                        {% endwith %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="empty-state">No students found in this class.</p>
+        {% endif %}
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

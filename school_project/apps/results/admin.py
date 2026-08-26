@@ -5,6 +5,7 @@ from django.http import HttpResponse
 from django.urls import reverse
 from django.utils.html import format_html
 
+from . import services
 from .models import (
     AcademicSession,
     ClassRoom,
@@ -97,6 +98,7 @@ class PsychomotorRatingAdmin(admin.ModelAdmin):
 
 @admin.register(ResultEntry)
 class ResultEntryAdmin(admin.ModelAdmin):
+    change_list_template = "admin/results_tools_link.html"
     list_display = ("student", "subject", "term", "ca_score", "exam_score", "total_display", "grade_display")
     list_filter = ("term", "subject", "student__current_class")
     search_fields = ("student__admission_number", "student__first_name", "student__last_name")
@@ -113,11 +115,12 @@ class ResultEntryAdmin(admin.ModelAdmin):
 
 @admin.register(TermResult)
 class TermResultAdmin(admin.ModelAdmin):
+    change_list_template = "admin/results_tools_link.html"
     list_display = ("student", "term", "average", "position_in_class", "is_published", "is_blocked")
     list_filter = ("term", "is_published", "is_blocked")
     search_fields = ("student__admission_number", "student__first_name", "student__last_name")
     list_editable = ("is_published", "is_blocked")
-    actions = ["publish_results", "unpublish_results", "recalculate_summary"]
+    actions = ["publish_results", "unpublish_results", "recalculate_summary", "recalculate_positions"]
 
     def publish_results(self, request, queryset):
         updated = queryset.update(is_published=True)
@@ -130,23 +133,35 @@ class TermResultAdmin(admin.ModelAdmin):
     unpublish_results.short_description = "Unpublish selected results"
 
     def recalculate_summary(self, request, queryset):
-        """
-        Recomputes overall_total/average from each student's ResultEntry rows.
-        Position-in-class and per-subject positions/averages are handled by
-        the separate `recalculate_positions` management command, since that
-        needs to rank across the WHOLE class, not just the selected rows.
-        """
+        """Recomputes overall_total/average from each selected student's ResultEntry rows."""
         count = 0
         for term_result in queryset:
-            entries = ResultEntry.objects.filter(student=term_result.student, term=term_result.term)
-            total = sum(e.total_score for e in entries)
-            term_result.overall_total = total
-            term_result.average = round(total / entries.count(), 1) if entries.count() else None
-            term_result.save(update_fields=["overall_total", "average"])
+            services.recalculate_term_result_totals(term_result.student, term_result.term)
             count += 1
         self.message_user(request, f"Recalculated totals for {count} result(s).", messages.SUCCESS)
     recalculate_summary.short_description = "Recalculate totals from result entries"
 
+    def recalculate_positions(self, request, queryset):
+        """
+        Recalculates per-subject positions/class-averages and per-class
+        overall position for every TERM represented in the selection —
+        this ranks the WHOLE class, not just the rows you selected, since
+        a position only makes sense relative to all of a student's
+        classmates.
+        """
+        terms = {tr.term for tr in queryset}
+        total_entries, total_term_results = 0, 0
+        for term in terms:
+            entries, term_results = services.recalculate_positions_for_term(term)
+            total_entries += entries
+            total_term_results += term_results
+        self.message_user(
+            request,
+            f"Recalculated positions across {len(terms)} term(s): "
+            f"{total_entries} subject entries, {total_term_results} student summaries.",
+            messages.SUCCESS,
+        )
+    recalculate_positions.short_description = "Recalculate positions & class averages (whole class)"
 
 @admin.register(ScratchCardBatch)
 class ScratchCardBatchAdmin(admin.ModelAdmin):

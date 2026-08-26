@@ -1,0 +1,7 @@
+{% extends "admin/change_list.html" %}
+
+{% block object-tools-items %}
+    <li><a href="{% url 'results:upload_scores' %}" class="addlink">Bulk score upload</a></li>
+    {% if user.is_superuser or user.is_staff %}{% endif %}
+    {{ block.super }}
+{% endblock %}

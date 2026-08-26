@@ -113,6 +113,16 @@ class ClassRoom(models.Model):
     def __str__(self):
         return self.name
 
+    @property
+    def subject_level(self):
+        """
+        Maps this classroom's level ('jss1'..'ss3') to the vocabulary used
+        by academics.Subject.level ('junior'/'senior') — needed because
+        subject names like 'Mathematics' exist at BOTH levels, and score
+        upload needs to know which one a given class's students take.
+        """
+        return "junior" if self.level.startswith("jss") else "senior"
+
 
 class Student(models.Model):
     """A student record. `admission_number` is the primary public identifier

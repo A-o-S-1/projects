@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Scores — Staff Tools{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+    <div class="container">
+        <p class="eyebrow">Staff Tools</p>
+        <h1>Bulk Upload Scores</h1>
+        <p class="page-hero__lede">Upload a CSV of CA and Exam scores for a whole class at once.</p>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container container--narrow">
+
+        <div class="lookup-help">
+            <h2>CSV Format</h2>
+            <p>The file needs a header row with exactly these column names:</p>
+            <pre class="csv-example">admission_number,subject,ca_score,exam_score
+MDS/2025/0001,Mathematics,24,58
+MDS/2025/0001,English Language,26,61
+MDS/2025/0002,Mathematics,18,40</pre>
+            <p>One row per student per subject. CA max 30, Exam max 70. Subject names must match exactly what's in the Academics curriculum (case-insensitive).</p>
+        </div>
+
+        {% if summary %}
+        <div class="alert alert--success" role="status">
+            <p><strong>Upload complete.</strong></p>
+            <p>{{ summary.created }} new score(s) created, {{ summary.updated }} updated, across {{ summary.students_touched }} student(s).</p>
+            <p>Positions and class averages recalculated: {{ summary.entries_ranked }} subject entries, {{ summary.term_results_ranked }} student summaries.</p>
+        </div>
+        {% endif %}
+
+        {% if errors %}
+        <div class="alert alert--error" role="alert">
+            <p><strong>{{ errors|length }} row(s) could not be processed:</strong></p>
+            <ul>
+                {% for error in errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data" novalidate class="site-form">
+            {% csrf_token %}
+            {% include "partials/form_field.html" with field=form.term %}
+            {% include "partials/form_field.html" with field=form.csv_file %}
+            <button type="submit" class="btn btn--accent">Upload</button>
+        </form>
+
+        <p class="staff-tools-link"><a href="{% url 'results:master_sheet' %}">Print a Class Master Sheet &rarr;</a></p>
+    </div>
+</section>
+{% endblock %}

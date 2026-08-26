@@ -135,3 +135,143 @@ class ResultLookupFlowTests(TestCase):
         self.client.get(reverse("results:done"))
         response = self.client.get(reverse("results:view_result"), follow=True)
         self.assertRedirects(response, reverse("results:check"))
+
+
+class StaffToolsTests(TestCase):
+    """Covers CSV bulk upload, subject-level disambiguation, the master
+    sheet, and the shared position/average calculation service."""
+
+    @classmethod
+    def setUpTestData(cls):
+        from django.contrib.auth.models import User
+        from apps.results.models import ResultEntry, TermResult
+
+        cls.staff_user = User.objects.create_user(
+            username="staffmember", password="testpass123", is_staff=True
+        )
+
+        session = AcademicSession.objects.create(
+            label="2025/2026", start_date=datetime.date(2025, 9, 1),
+            end_date=datetime.date(2026, 7, 31), is_current=True,
+        )
+        cls.term = Term.objects.create(session=session, name="first", is_current=True)
+        cls.classroom = ClassRoom.objects.create(name="JSS1A", level="jss1", arm="A")
+
+        department = Department.objects.create(name="Core")
+        # Deliberately create "Mathematics" at BOTH levels — the exact
+        # ambiguity that caused a real bug during development.
+        cls.junior_maths = Subject.objects.create(name="Mathematics", department=department, level="junior")
+        cls.senior_maths = Subject.objects.create(name="Mathematics", department=department, level="senior")
+
+        cls.student = Student.objects.create(
+            admission_number="TEST/JSS1/0001", first_name="Jane", last_name="Doe",
+            current_class=cls.classroom,
+        )
+
+    def _csv_upload(self, csv_bytes, filename="upload.csv"):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        self.client.login(username="staffmember", password="testpass123")
+        upload = SimpleUploadedFile(filename, csv_bytes, content_type="text/csv")
+        return self.client.post(reverse("results:upload_scores"), {
+            "term": self.term.id, "csv_file": upload,
+        })
+
+    def test_anonymous_user_cannot_access_upload_page(self):
+        response = self.client.get(reverse("results:upload_scores"))
+        self.assertNotEqual(response.status_code, 200)
+
+    def test_staff_can_access_upload_page(self):
+        self.client.login(username="staffmember", password="testpass123")
+        response = self.client.get(reverse("results:upload_scores"))
+        self.assertEqual(response.status_code, 200)
+
+    def test_csv_upload_resolves_ambiguous_subject_by_class_level(self):
+        """The core bug this test suite exists to prevent regressing: a JSS1
+        student's 'Mathematics' score must land on the JUNIOR Subject record,
+        never the senior one, even though both share the exact same name."""
+        csv_bytes = b"admission_number,subject,ca_score,exam_score\nTEST/JSS1/0001,Mathematics,25,60\n"
+        response = self._csv_upload(csv_bytes)
+        self.assertContains(response, "Upload complete")
+
+        from apps.results.models import ResultEntry
+        entry = ResultEntry.objects.get(student=self.student, term=self.term)
+        self.assertEqual(entry.subject_id, self.junior_maths.id)
+        self.assertNotEqual(entry.subject_id, self.senior_maths.id)
+
+    def test_csv_upload_reports_unknown_admission_number_without_crashing(self):
+        csv_bytes = b"admission_number,subject,ca_score,exam_score\nNOTREAL/0000,Mathematics,25,60\n"
+        response = self._csv_upload(csv_bytes)
+        self.assertContains(response, "no student with admission number")
+
+    def test_csv_upload_rejects_out_of_range_scores(self):
+        csv_bytes = b"admission_number,subject,ca_score,exam_score\nTEST/JSS1/0001,Mathematics,99,60\n"
+        response = self._csv_upload(csv_bytes)
+        self.assertContains(response, "out of range")
+
+    def test_csv_upload_recalculates_totals_and_positions(self):
+        csv_bytes = b"admission_number,subject,ca_score,exam_score\nTEST/JSS1/0001,Mathematics,25,60\n"
+        self._csv_upload(csv_bytes)
+
+        from apps.results.models import TermResult
+        term_result = TermResult.objects.get(student=self.student, term=self.term)
+        self.assertEqual(term_result.overall_total, 85)
+        self.assertEqual(term_result.position_in_class, "1st out of 1")
+
+    def test_master_sheet_requires_staff_login(self):
+        response = self.client.get(reverse("results:master_sheet"))
+        self.assertNotEqual(response.status_code, 200)
+
+    def test_master_sheet_renders_with_class_and_term_selected(self):
+        self._csv_upload(b"admission_number,subject,ca_score,exam_score\nTEST/JSS1/0001,Mathematics,25,60\n")
+        self.client.login(username="staffmember", password="testpass123")
+        response = self.client.get(reverse("results:master_sheet"), {
+            "term": self.term.id, "classroom": self.classroom.id,
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Doe Jane")
+        self.assertContains(response, "85.0")  # the total we uploaded
+
+
+class RecalculatePositionsServiceTests(TestCase):
+    """Directly tests the shared ranking service in isolation from any view."""
+
+    def test_positions_never_cross_class_boundaries(self):
+        from apps.results import services
+        from apps.results.models import ResultEntry, TermResult
+
+        session = AcademicSession.objects.create(
+            label="2025/2026", start_date=datetime.date(2025, 9, 1),
+            end_date=datetime.date(2026, 7, 31), is_current=True,
+        )
+        term = Term.objects.create(session=session, name="first", is_current=True)
+        department = Department.objects.create(name="Core")
+        subject = Subject.objects.create(name="English", department=department, level="junior")
+
+        class_a = ClassRoom.objects.create(name="JSS1A", level="jss1", arm="A")
+        class_b = ClassRoom.objects.create(name="JSS1B", level="jss1", arm="B")
+
+        # Weakest student in Class A scores higher than the strongest in Class B.
+        weak_in_a = Student.objects.create(admission_number="A/1", first_name="Weak", last_name="InA", current_class=class_a)
+        strong_in_a = Student.objects.create(admission_number="A/2", first_name="Strong", last_name="InA", current_class=class_a)
+        strong_in_b = Student.objects.create(admission_number="B/1", first_name="Strong", last_name="InB", current_class=class_b)
+
+        ResultEntry.objects.create(student=weak_in_a, term=term, subject=subject, ca_score=20, exam_score=40)
+        ResultEntry.objects.create(student=strong_in_a, term=term, subject=subject, ca_score=30, exam_score=70)
+        ResultEntry.objects.create(student=strong_in_b, term=term, subject=subject, ca_score=10, exam_score=20)
+
+        for student in [weak_in_a, strong_in_a, strong_in_b]:
+            services.recalculate_term_result_totals(student, term)
+        services.recalculate_positions_for_term(term)
+
+        weak_entry = ResultEntry.objects.get(student=weak_in_a, term=term, subject=subject)
+        strong_entry = ResultEntry.objects.get(student=strong_in_a, term=term, subject=subject)
+
+        # Within Class A, weak_in_a must be LAST (2nd out of 2 in that class),
+        # never boosted by comparison against the lower-scoring Class B student.
+        self.assertEqual(weak_entry.position_in_subject, "2nd")
+        self.assertEqual(strong_entry.position_in_subject, "1st")
+
+        # Class B's single student must be ranked only within Class B (1st
+        # out of 1), not penalized for scoring lower than Class A students.
+        b_term_result = TermResult.objects.get(student=strong_in_b, term=term)
+        self.assertEqual(b_term_result.position_in_class, "1st out of 1")
