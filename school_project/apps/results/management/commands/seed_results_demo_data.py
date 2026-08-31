@@ -18,6 +18,7 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from apps.academics.models import Subject
+from apps.results import services
 from apps.results.models import (
     AcademicSession,
     ClassRoom,
@@ -75,18 +76,19 @@ class Command(BaseCommand):
             )
 
     def seed_grade_bands(self):
-        # Read directly off the school's real report card image. Editable
-        # any time from /admin/results/gradeband/ without touching code.
+        # Replaces our earlier guess (read off a low-resolution report card
+        # photo) with the REAL scale, reverse-engineered directly from the
+        # school's actual scoresheet data (every (score, grade) pair in the
+        # workbook was checked against these boundaries — exact match).
+        # Editable any time from /admin/results/gradeband/ without touching code.
+        GradeBand.objects.all().delete()
         bands = [
-            (70, 100, "A1", "Excellent", 0),
-            (65, 69, "A2", "Very Good", 1),
-            (60, 64, "A3", "Good", 2),
-            (55, 59, "C4", "Credit", 3),
-            (50, 54, "C5", "Merit", 4),
-            (45, 49, "C6", "Pass", 5),
-            (40, 44, "P7", "Strong Pass", 6),
-            (35, 39, "P8", "Weak Pass", 7),
-            (0, 34, "F", "Fail", 8),
+            (70, 100, "A", "Excellent", 0),
+            (60, 69, "B", "Very Good", 1),
+            (50, 59, "C", "Good", 2),
+            (45, 49, "D", "Pass", 3),
+            (40, 44, "E", "Weak Pass", 4),
+            (0, 39, "F", "Fail", 5),
         ]
         for min_score, max_score, code, remark, order in bands:
             GradeBand.objects.get_or_create(
@@ -194,12 +196,10 @@ class Command(BaseCommand):
                     student=student, term=term, skill=skill, defaults={"rating": rating}
                 )
 
-        # Recalculate class positions now that every demo student has a TermResult.
-        ranked = TermResult.objects.filter(term=term, student__in=students).order_by("-average")
-        for i, tr in enumerate(ranked):
-            suffix = "th" if 11 <= (i + 1) % 100 <= 13 else {1: "st", 2: "nd", 3: "rd"}.get((i + 1) % 10, "th")
-            tr.position_in_class = f"{i + 1}{suffix} out of {len(students)}"
-            tr.save(update_fields=["position_in_class"])
+        # Recalculate positions/averages using the same shared logic the
+        # admin action and CSV upload use — also fills in per-subject
+        # position/class-average, which this seed script never computed before.
+        services.recalculate_positions_for_term(term)
 
     def seed_scratch_cards(self, students):
         batch, _ = ScratchCardBatch.objects.get_or_create(

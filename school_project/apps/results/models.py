@@ -160,7 +160,7 @@ class Student(models.Model):
 # ==============================================================================
 class GradeBand(models.Model):
     """
-    One row of the grading scale, e.g. '70-100 = A1, Excellent'.
+    One row of the grading scale, e.g. '70-100 = A, Excellent'.
 
     Design decision: this is a database table, not a hardcoded Python dict —
     seeded with our best reading of the school's existing report card, but
@@ -170,7 +170,7 @@ class GradeBand(models.Model):
 
     min_score = models.PositiveSmallIntegerField()
     max_score = models.PositiveSmallIntegerField()
-    grade_code = models.CharField(max_length=5, help_text="e.g. A1, C4, F9")
+    grade_code = models.CharField(max_length=5, help_text="e.g. A, B, C")
     remark = models.CharField(max_length=50, help_text="e.g. Excellent, Credit, Fail")
     order = models.PositiveIntegerField(default=0, help_text="Display order, highest grade first.")
 
@@ -429,3 +429,52 @@ class ResultCheckLog(models.Model):
     def __str__(self):
         status = "OK" if self.was_successful else "FAILED"
         return f"{self.admission_number_attempted} from {self.ip_address} — {status}"
+
+
+# ==============================================================================
+# Session-level cumulative summary (the "annual broadsheet")
+# ==============================================================================
+class SessionResult(models.Model):
+    """
+    One student's cumulative record for a whole ACADEMIC SESSION (all three
+    terms combined) — matches the school's own "Annual Cumulative Broadsheet"
+    sheet. This is a separate concept from TermResult: a term result is
+    entered by staff as scores come in; a session result is finalized once
+    at year-end and carries the promotion decision, which is a staff
+    judgment call, not something derivable purely from the numbers.
+
+    Design decision: term totals are STORED here (copied from the school's
+    own broadsheet at import time) rather than always summing the three
+    TermResult rows live. The school's broadsheet is the authoritative
+    record of what was decided — recomputing it silently from possibly
+    incomplete TermResult data could disagree with what was actually
+    published to parents and staff at the time.
+    """
+
+    PROMOTION_CHOICES = [
+        ("promoted", "Promoted"),
+        ("promoted_on_trial", "Promoted on Trial"),
+        ("repeat", "Repeat"),
+    ]
+
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="session_results")
+    session = models.ForeignKey(AcademicSession, on_delete=models.CASCADE, related_name="session_results")
+
+    first_term_total = models.DecimalField(max_digits=7, decimal_places=1, blank=True, null=True)
+    second_term_total = models.DecimalField(max_digits=7, decimal_places=1, blank=True, null=True)
+    third_term_total = models.DecimalField(max_digits=7, decimal_places=1, blank=True, null=True)
+    cumulative_total = models.DecimalField(max_digits=8, decimal_places=1, blank=True, null=True)
+    session_average = models.DecimalField(max_digits=5, decimal_places=1, blank=True, null=True)
+    overall_position = models.CharField(max_length=10, blank=True, help_text="e.g. 2nd out of 41")
+    promotion_status = models.CharField(max_length=20, choices=PROMOTION_CHOICES, blank=True)
+
+    is_published = models.BooleanField(default=False)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ["student", "session"]
+        ordering = ["-session__start_date"]
+        verbose_name = "Session Result (Annual Broadsheet)"
+
+    def __str__(self):
+        return f"{self.student} — {self.session}"

@@ -16,6 +16,7 @@ from .models import (
     ResultEntry,
     ScratchCard,
     ScratchCardBatch,
+    SessionResult,
     Student,
     Term,
     TermResult,
@@ -116,11 +117,16 @@ class ResultEntryAdmin(admin.ModelAdmin):
 @admin.register(TermResult)
 class TermResultAdmin(admin.ModelAdmin):
     change_list_template = "admin/results_tools_link.html"
-    list_display = ("student", "term", "average", "position_in_class", "is_published", "is_blocked")
+    list_display = ("student", "term", "average", "position_in_class", "is_published", "is_blocked", "print_link")
     list_filter = ("term", "is_published", "is_blocked")
     search_fields = ("student__admission_number", "student__first_name", "student__last_name")
     list_editable = ("is_published", "is_blocked")
     actions = ["publish_results", "unpublish_results", "recalculate_summary", "recalculate_positions"]
+
+    def print_link(self, obj):
+        url = reverse("results:staff_result_print", args=[obj.student_id, obj.term_id])
+        return format_html('<a href="{}" target="_blank">Print &rarr;</a>', url)
+    print_link.short_description = "Print"
 
     def publish_results(self, request, queryset):
         updated = queryset.update(is_published=True)
@@ -197,3 +203,23 @@ class ResultCheckLogAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         return False  # logs are system-generated only, never hand-created
+
+
+@admin.register(SessionResult)
+class SessionResultAdmin(admin.ModelAdmin):
+    change_list_template = "admin/results_tools_link.html"
+    list_display = ("student", "session", "cumulative_total", "session_average", "overall_position", "promotion_status", "is_published")
+    list_filter = ("session", "promotion_status", "is_published")
+    search_fields = ("student__admission_number", "student__first_name", "student__last_name")
+    list_editable = ("is_published",)
+    actions = ["publish_session_results", "unpublish_session_results"]
+
+    def publish_session_results(self, request, queryset):
+        updated = queryset.update(is_published=True)
+        self.message_user(request, f"Published {updated} session result(s).", messages.SUCCESS)
+    publish_session_results.short_description = "Publish selected session results"
+
+    def unpublish_session_results(self, request, queryset):
+        updated = queryset.update(is_published=False)
+        self.message_user(request, f"Unpublished {updated} session result(s).", messages.SUCCESS)
+    unpublish_session_results.short_description = "Unpublish selected session results"

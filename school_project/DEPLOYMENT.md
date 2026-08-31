@@ -1,9 +1,21 @@
 # Deployment Checklist — Mater Domini Schools Website
 
-This is a practical, in-order checklist for taking Phase 1 (the public
-website) from your machine to a live production server. Work through it
-top to bottom the first time you deploy; keep it handy for future
-redeploys too.
+This is a practical, in-order checklist for taking the full site — the
+public website AND the Result Portal (scratch cards, staff workbook
+uploads, result printing) — from your machine to a live production
+server. Work through it top to bottom the first time you deploy; keep it
+handy for future redeploys too.
+
+## Recommended timeline for your launch
+
+Given you're aiming for roughly two weeks out, here's the order that
+minimizes risk:
+
+1. **Days 1–3: Choose hosting, provision Postgres, point the domain** (steps 1–3 below). Domain DNS propagation can take hours, so start this immediately even if nothing else is ready.
+2. **Days 3–5: Deploy the code with demo/seed data still in place**, run through the full verification checklist (step 8) against that demo data first. It's much easier to spot a bug in a placeholder result than to debug live while parents are watching.
+3. **Days 5–10: Import real data** (step 7b) — one class/arm workbook at a time, checking each prints correctly before moving to the next. This is naturally the slowest step; budget the most time here.
+4. **Days 10–12: Generate and hand out scratch cards**, test the public lookup with 2–3 real students/parents before wide release.
+5. **Days 12–14: Final full verification pass, then publish results and announce the site.** Keep the old system available in parallel for a few days as a fallback in case something unexpected comes up.
 
 ## 1. Choose where it will run
 
@@ -22,6 +34,33 @@ with (SQLite is fine for one developer on one laptop; it is not safe for
 a live site with concurrent users). Most hosts above offer a Postgres
 add-on. You'll get a `DATABASE_URL` connection string from whichever
 host you choose — keep it, you need it in step 4.
+
+## 2b. Check whether your host's file storage is actually permanent
+
+**This matters a lot for you specifically**, since you'll have real
+uploaded content: student passport photos, staff photos, gallery photos,
+and the result workbooks you import. Django stores these as ordinary
+files on disk (`MEDIA_ROOT`), which works perfectly — **as long as that
+disk survives a redeploy.**
+
+Some free/cheap PaaS tiers (Render's free web services, for example) use
+an *ephemeral* filesystem: every time you redeploy or the service
+restarts, anything written to disk is wiped, including `media/`. Your
+database records would survive, but every uploaded photo would 404.
+
+Before launch, confirm one of these is true for your host:
+- You're on a paid tier with a persistent disk/volume attached, with
+  `MEDIA_ROOT` pointed at that volume, **or**
+- You're using a traditional VPS (Option B below), where the disk is
+  simply always there, **or**
+- You've added object storage (e.g. an S3-compatible bucket via
+  `django-storages`) — a reasonable next step if you outgrow local
+  storage, but not something this project sets up by default (kept out
+  to avoid an unnecessary dependency until you actually need it).
+
+If in doubt, ask your host directly: "does my app's local disk persist
+across deploys and restarts?" Get a clear yes before you rely on it for
+real student data.
 
 ## 3. Buy/point the domain
 
@@ -120,18 +159,49 @@ Use [Certbot](https://certbot.eff.org/) for a free Let's Encrypt
 certificate. `SECURE_SSL_REDIRECT` and friends are already turned on in
 `prod.py`, so once HTTPS is live, HTTP will auto-redirect.
 
+## 7b. Import your real 2025/2026 data before launch
+
+You're rebuilding real result data for JSS1–SS3 (all arms) for the
+current session. Do this **on the production database, after deploying
+but before announcing the site**, in this order:
+
+1. Log into `/admin/` with your real superuser account (not the demo one).
+2. For each class/arm's workbook: `/staff/upload-workbook/` — this creates
+   every student in the REGISTER sheet automatically, then writes
+   whatever term sheets are present. Repeat once per class/arm.
+3. After all classes are in, run `python manage.py recalculate_positions`
+   once to make sure every class's rankings reflect the complete data
+   (the upload does this per-upload already, but one final pass after
+   *all* classes exist is a good sanity check).
+4. Generate scratch cards for the term(s) you're publishing:
+   `/admin/results/scratchcardbatch/`, then check individual results
+   print correctly via `/staff/result/<student_id>/<term_id>/` before
+   publishing anything to parents.
+5. Only then: use the `TermResult` admin's "Publish selected results"
+   action for the term(s) ready to be checked publicly.
+
+**Do not run `seed_demo_data` or `seed_results_demo_data` on the
+production database.** Those are for local development only — they
+create fictional students, sample news, and placeholder staff entries
+that have no business on the live site. On production, only ever run
+`migrate` and then enter real data through the admin/workbook uploads.
+
 ## 8. Verify before telling anyone the site is live
 
 - [ ] Visit every page: `/`, `/about/`, `/academics/`, `/admissions/`, `/staff/`, `/management/`, `/gallery/`, `/news/`, `/events/`, `/contact/`
 - [ ] Submit the Admissions inquiry form and the Contact form — confirm both save (check `/admin/`)
 - [ ] Log into `/admin/` and replace every `[Placeholder ...]` entry (staff bios, sample news/events) with real content — search the admin for `[Placeholder` and `[Sample` to find every one
 - [ ] Upload the school's real photos in Gallery, staff photos in Staff Directory
+- [ ] Test `/check-result/` end-to-end with one real student and one real (unused) scratch card — confirm the result shown matches what's in the admin, and that the card is marked used afterward
+- [ ] Print an individual result (`/staff/result/<student_id>/<term_id>/`) and confirm it lands on exactly one A4 page on paper, not just on screen — printer margins can differ slightly from the browser preview
+- [ ] Confirm unpublished/blocked results correctly refuse a lookup even with a valid card
 - [ ] Confirm HTTPS works and HTTP redirects to it
 - [ ] Confirm `/admin/` requires login and isn't publicly browsable
 - [ ] Check the site on an actual phone, not just a resized browser window
 - [ ] Visit a nonsense URL (e.g. `/asdf/`) and confirm the custom "Page Not Found" page shows, not a raw Django error
 - [ ] Check `/sitemap.xml` and `/robots.txt` both load and list the real domain (not `127.0.0.1`)
 - [ ] Run `python manage.py check --deploy` against your production settings — it should report zero issues; if anything shows up, fix it before announcing the site is live
+- [ ] Confirm no `[Demo ...]`/fictional student data from `seed_results_demo_data` exists on production — that command should never have been run there
 
 ## 9. Ongoing maintenance
 

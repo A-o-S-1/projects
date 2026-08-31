@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load static result_extras %}
+
+{% block title %}Class Results — Staff Tools{% endblock %}
+
+{% block content %}
+<section class="page-hero no-print">
+    <div class="container">
+        <p class="eyebrow">Staff Tools</p>
+        <h1>Print All Individual Results — Whole Class</h1>
+        <p class="page-hero__lede">Every student's result sheet in one class, ready to print as one batch for the form teacher.</p>
+    </div>
+</section>
+
+<section class="section no-print">
+    <div class="container">
+        <form method="get" class="site-form site-form--inline">
+            {% include "partials/form_field.html" with field=form.term %}
+            {% include "partials/form_field.html" with field=form.classroom %}
+            <button type="submit" class="btn btn--accent">Generate</button>
+        </form>
+
+        {% if sheets %}
+        <div class="master-sheet-actions">
+            <button type="button" class="btn btn--outline-dark" onclick="window.print()">Print All ({{ sheets|length }} students)</button>
+            <a href="{% url 'results:master_sheet' %}?term={{ term.id }}&classroom={{ classroom.id }}" class="btn btn--outline-dark">View Master Sheet Instead</a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+{% if sheets %}
+<section class="section">
+    <div class="container">
+        {% for sheet in sheets %}
+        <div class="printable-student-sheet">
+            {% with term_result=sheet.term_result student=sheet.student result_entries=sheet.result_entries psychomotor_ratings=sheet.psychomotor_ratings %}
+            {% include "partials/result_sheet.html" %}
+            {% endwith %}
+        </div>
+        {% empty %}
+        <p class="empty-state">No active students found in this class.</p>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+{% endblock %}

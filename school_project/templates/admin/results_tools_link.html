@@ -1,6 +1,8 @@
 {% extends "admin/change_list.html" %}
 {% block object-tools-items %}
+<li><a href="{% url 'results:upload_workbook' %}" class="button">Upload Result Workbook (Excel)</a></li>
 <li><a href="{% url 'results:upload_scores' %}" class="button">Upload Scores (CSV)</a></li>
 <li><a href="{% url 'results:master_sheet' %}" class="button">Print Class Master Sheet</a></li>
+<li><a href="{% url 'results:staff_class_results_print' %}" class="button">Print All Individual Results (Class)</a></li>
 {{ block.super }}
 {% endblock %}

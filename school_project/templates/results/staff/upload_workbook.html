@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Result Workbook — Staff Tools{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+    <div class="container">
+        <p class="eyebrow">Staff Tools</p>
+        <h1>Upload Class Result Workbook</h1>
+        <p class="page-hero__lede">
+            Upload one class/arm's Excel workbook (REGISTER + term sheets + broadsheet) in a single step.
+            New students in the REGISTER are added to the system automatically.
+        </p>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container container--narrow">
+
+        <div class="lookup-help">
+            <h2>How This Works</h2>
+            <p>Upload the school's standard result workbook exactly as produced — one file per class/arm:</p>
+            <ul class="checklist">
+                <li><strong>REGISTER</strong> sheet — identifies the class (via its class code, e.g. J1A, S2B) and creates any student not already in the system.</li>
+                <li><strong>1ST TERM / 2ND TERM / 3RD TERM</strong> sheets — whichever are present get their scores written in. Upload again later once more terms are filled in — nothing is overwritten except the specific subject scores in that sheet.</li>
+                <li><strong>BROADSHEET</strong> sheet — the finalized annual totals and promotion decision.</li>
+            </ul>
+            <p>Positions and class averages are recalculated automatically after every upload.</p>
+        </div>
+
+        {% if summary %}
+        <div class="alert alert--success" role="status">
+            <p><strong>{{ classroom.name }} processed successfully.</strong></p>
+            <p>
+                {{ summary.students_created }} new student(s) added,
+                {{ summary.students_updated }} existing student(s) confirmed,
+                {{ summary.scores_written }} score(s) written.
+            </p>
+            {% if summary.terms_processed %}
+            <p>Terms processed: {{ summary.terms_processed|join:", " }}</p>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if errors %}
+        <div class="alert alert--error" role="alert">
+            <p><strong>{{ errors|length }} issue(s) found:</strong></p>
+            <ul>
+                {% for error in errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data" novalidate class="site-form">
+            {% csrf_token %}
+            {% include "partials/form_field.html" with field=form.session %}
+            {% include "partials/form_field.html" with field=form.workbook_file %}
+            <button type="submit" class="btn btn--accent">Upload Workbook</button>
+        </form>
+
+        <p class="staff-tools-link"><a href="{% url 'results:master_sheet' %}">Print a Class Master Sheet &rarr;</a></p>
+    </div>
+</section>
+{% endblock %}

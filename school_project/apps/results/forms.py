@@ -41,7 +41,46 @@ class MasterSheetForm(forms.Form):
         ]
 
 
+class WorkbookUploadForm(forms.Form):
+    """
+    Upload the school's actual result workbook — one file per class/arm,
+    containing REGISTER, 1ST/2ND/3RD TERM, and BROADSHEET sheets exactly
+    as the school's real template produces them. This single upload
+    creates missing Student records from REGISTER, scores from whichever
+    term sheets have data, and the annual summary from BROADSHEET.
+    """
+    session = forms.ChoiceField(label="Academic Session")
+    workbook_file = forms.FileField(label="Workbook (.xlsx)")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from .models import AcademicSession
+        self.fields["session"].choices = [
+            (s.id, s.label) for s in AcademicSession.objects.all()
+        ]
+
+    def clean_workbook_file(self):
+        f = self.cleaned_data["workbook_file"]
+        if not f.name.lower().endswith(".xlsx"):
+            raise forms.ValidationError("Please upload a .xlsx workbook file.")
+        return f
+
+
 class ResultLookupForm(forms.Form):
+    """
+    Public result lookup form. Deliberately a plain Form, not a ModelForm —
+    none of these fields map to a single model; validation logic lives in
+    the view since it needs to check three models together (Student,
+    ScratchCard, TermResult), not just field-level rules.
+    """
+
+    admission_number = forms.CharField(label="Admission Number", max_length=20)
+    term = forms.ChoiceField(label="Term")
+    pin = forms.CharField(label="Scratch Card PIN", max_length=12, widget=forms.PasswordInput(render_value=True))
+    serial_number = forms.CharField(label="Serial Number", max_length=20)
+
+    # Honeypot — same spam-mitigation pattern as the admissions/contact forms.
+    website = forms.CharField(required=False, widget=forms.HiddenInput())
     """
     Public result lookup form. Deliberately a plain Form, not a ModelForm —
     none of these fields map to a single model; validation logic lives in

@@ -7,7 +7,7 @@ from django.views.generic import CreateView, TemplateView
 from apps.news_events.models import Event, NewsPost
 
 from .forms import AdmissionInquiryForm
-from .models import AboutPage, AdmissionsPage, AdmissionStep, CoreValue
+from .models import AboutPage, AdmissionsPage, AdmissionStep, CoreValue, HeroSlide
 
 
 class HomeView(TemplateView):
@@ -22,6 +22,7 @@ class HomeView(TemplateView):
         context["upcoming_events"] = [
             e for e in Event.published.all() if e.start_datetime >= timezone.now()
         ][:3]
+        context["hero_slides"] = HeroSlide.objects.filter(is_active=True)
         return context
 
 

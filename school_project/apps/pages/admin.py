@@ -6,6 +6,7 @@ from .models import (
     AdmissionsPage,
     AdmissionStep,
     CoreValue,
+    HeroSlide,
     SchoolInfo,
 )
 
@@ -74,3 +75,9 @@ class AdmissionInquiryAdmin(admin.ModelAdmin):
     search_fields = ("child_name", "parent_name", "phone", "email")
     readonly_fields = ("submitted_at",)
     list_editable = ("reviewed",)
+
+
+@admin.register(HeroSlide)
+class HeroSlideAdmin(admin.ModelAdmin):
+    list_display = ("title", "order", "is_active")
+    list_editable = ("order", "is_active")

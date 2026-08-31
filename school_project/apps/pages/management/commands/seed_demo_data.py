@@ -26,6 +26,7 @@ from apps.pages.models import (
     AdmissionsPage,
     AdmissionStep,
     CoreValue,
+    HeroSlide,
     SchoolInfo,
 )
 from apps.staff.models import StaffMember
@@ -43,6 +44,7 @@ class Command(BaseCommand):
         self.seed_gallery()
         self.seed_news()
         self.seed_events()
+        self.seed_hero_slides()
         self.stdout.write(self.style.SUCCESS("Demo data seeded successfully."))
 
     # ----------------------------------------------------------------
@@ -143,75 +145,80 @@ class Command(BaseCommand):
         )
         page.save()
 
-        # (department name, description, order): [(subject, level, track), ...]
-        curriculum = {
-            ("Sciences", "Physical, biological, and applied sciences.", 0): [
-                ("Basic Science", "junior", ""),
-                ("Biology", "senior", "science"),
-                ("Chemistry", "senior", "science"),
-                ("Physics", "senior", "science"),
-            ],
-            ("Mathematics", "Core and further mathematics.", 1): [
-                ("Mathematics", "junior", ""),
-                ("Mathematics", "senior", "core"),
-                ("Further Mathematics", "senior", "science"),
-            ],
-            ("Languages", "English and French language studies.", 2): [
-                ("English Language", "junior", ""),
-                ("French", "junior", ""),
-                ("English Language", "senior", "core"),
-                ("Literature in English", "senior", "arts"),
-                ("French", "senior", "arts"),
-            ],
-            ("Humanities & Social Sciences", "History, Government, Geography, and Civic Education.", 3): [
-                ("Social Studies", "junior", ""),
-                ("Civic Education", "junior", ""),
-                ("Civic Education", "senior", "core"),
-                ("Geography", "senior", "science"),
-                ("Geography", "senior", "arts"),
-                ("Government", "senior", "arts"),
-                ("History", "senior", "arts"),
-            ],
-            ("Business Studies", "Commerce, Accounting, and Economics.", 4): [
-                ("Basic Business Studies", "junior", ""),
-                ("Commerce", "senior", "commercial"),
-                ("Financial Accounting", "senior", "commercial"),
-                ("Economics", "senior", "commercial"),
-                ("Office Practice", "senior", "commercial"),
-            ],
-            ("Religious & Moral Studies", "Christian Religious Studies and moral formation.", 5): [
-                ("Christian Religious Studies", "junior", ""),
-                ("Christian Religious Studies", "senior", "arts"),
-            ],
-            ("Creative, Technical & Vocational", "Cultural/Creative Arts, Basic Technology, Agricultural Science, ICT, and Home Economics.", 6): [
-                ("Cultural and Creative Arts", "junior", ""),
-                ("Basic Technology", "junior", ""),
-                ("Agricultural Science", "junior", ""),
-                ("Computer Studies/ICT", "junior", ""),
-                ("Home Economics", "junior", ""),
-                ("Agricultural Science", "senior", "science"),
-                ("Computer Science", "senior", "science"),
-                ("Fine Arts", "senior", "arts"),
-                ("Trade/Entrepreneurship Subject", "senior", "commercial"),
-            ],
-            ("Physical & Health Education", "Sports and health education.", 7): [
-                ("Physical and Health Education", "junior", ""),
-            ],
-        }
+        # Exact subject lists as specified by the school.
+        junior_subjects = [
+            "English Studies", "Mathematics", "Intermediate Science", "Digital Technologies",
+            "Technical Drawing", "Business Studies", "P.H.E", "Social and Citizenship Studies",
+            "Agricultural Science", "C.R.S", "Home Economics", "Literature-in-English",
+            "C.C.A", "History",
+        ]
 
-        for (dept_name, dept_desc, dept_order), subjects in curriculum.items():
-            department, _ = Department.objects.get_or_create(
-                name=dept_name, defaults={"description": dept_desc, "order": dept_order}
+        senior_subjects = [
+            "English Studies", "Mathematics", "Biology", "Chemistry", "Physics", "Economics",
+            "Government", "Agricultural Science", "Digital Technology",
+            "Citizenship & Heritage Studies", "C.R.S", "Geography", "Literature",
+            "Commerce", "Financial Accounting", "Health Science", "Livestock Farming",
+            "History",
+        ]
+
+        department, _ = Department.objects.get_or_create(
+            name="Junior Secondary",
+            defaults={
+                "description": "All JSS1–JSS3 subjects.",
+                "order": 0,
+            },
+        )
+
+        for name in junior_subjects:
+            Subject.objects.get_or_create(
+                name=name,
+                level="junior",
+                department=department,
             )
-            for subj_name, level, track in subjects:
-                Subject.objects.get_or_create(
-                    name=subj_name, department=department, level=level, track=track
-                )
+
+        department2, _ = Department.objects.get_or_create(
+            name="Senior Secondary",
+            defaults={
+                "description": "All SS1–SS3 subjects.",
+                "order": 1,
+            },
+        )
+
+        for name in senior_subjects:
+            Subject.objects.get_or_create(
+                name=name,
+                level="senior",
+                department=department2,
+            )
 
     def seed_staff(self):
-        sciences = Department.objects.filter(name="Sciences").first()
-        mathematics = Department.objects.filter(name="Mathematics").first()
-        languages = Department.objects.filter(name="Languages").first()
+        junior_dept = Department.objects.filter(name="Junior Secondary").first()
+
+        # Real: the founder — the Bishop of Ogoja, under whose permission the
+        # school was established (see About page history). Placed first in
+        # display order, above the Administrator.
+        StaffMember.objects.get_or_create(
+            full_name="Most Rev. Dr. Donatus Edet Akpan",
+            defaults={
+                "role_title": "Bishop of Ogoja & Founder",
+                "category": "management",
+                "bio": (
+                    "Most Rev. Dr. Donatus Edet Akpan has served as Bishop of the Roman Catholic "
+                    "Diocese of Ogoja since 2017. Born in 1952 in Ikat Ada Utor, within the Diocese "
+                    "of Ikot Ekpene, he began his formation for the priesthood at Queen of Angels "
+                    "Minor Seminary before continuing his studies at Bigard Memorial Seminary and "
+                    "St. Joseph Major Seminary, both in Enugu. He was ordained a priest in October "
+                    "1985 and later undertook advanced studies in biblical theology at the "
+                    "University of Nigeria, Nsukka. Before his appointment as bishop, much of his "
+                    "priestly ministry was spent serving the Roman Catholic Archdiocese of Abuja, "
+                    "including a period as rector. He was appointed Bishop of Ogoja in April 2017 "
+                    "and formally ordained to the role that July. It was under his permission that "
+                    "Mater Domini Schools was established by the Diocese of Ogoja, and he remains "
+                    "a guiding figure in the school's mission and identity."
+                ),
+                "order": 0,
+            },
+        )
 
         # Real: the Administrator, whose message we already have from About.
         StaffMember.objects.get_or_create(
@@ -220,7 +227,7 @@ class Command(BaseCommand):
                 "role_title": "School Administrator",
                 "category": "management",
                 "bio": "Oversees the overall direction, mission, and daily operations of the school.",
-                "order": 0,
+                "order": 1,
             },
         )
 
@@ -234,13 +241,13 @@ class Command(BaseCommand):
              "Placeholder profile — replace with real staff bio and photo from the admin panel.", 0),
             ("[Placeholder Staff]", "Front Desk / Admissions Officer", "non_teaching", None,
              "Placeholder profile — replace with real staff bio and photo from the admin panel.", 1),
-            ("[Placeholder Teacher]", "Head of Sciences Department", "teaching", sciences,
+            ("[Placeholder Teacher]", "Head of Sciences Department", "teaching", junior_dept,
              "Placeholder profile — replace with real staff bio and photo from the admin panel.", 0),
-            ("[Placeholder Teacher]", "Mathematics Teacher", "teaching", mathematics,
+            ("[Placeholder Teacher]", "Mathematics Teacher", "teaching", junior_dept,
              "Placeholder profile — replace with real staff bio and photo from the admin panel.", 1),
-            ("[Placeholder Teacher]", "English Language Teacher", "teaching", languages,
+            ("[Placeholder Teacher]", "English Language Teacher", "teaching", junior_dept,
              "Placeholder profile — replace with real staff bio and photo from the admin panel.", 2),
-            ("[Placeholder Teacher]", "Basic Science Teacher (JSS)", "teaching", sciences,
+            ("[Placeholder Teacher]", "Basic Science Teacher (JSS)", "teaching", junior_dept,
              "Placeholder profile — replace with real staff bio and photo from the admin panel.", 3),
         ]
         for full_name, role_title, category, department, bio, order in placeholders:
@@ -256,34 +263,22 @@ class Command(BaseCommand):
             )
 
     def seed_gallery(self):
-        entries = [
-            ("Front Gate & Signage", "campus", "The school entrance along the Ogboja road."),
-            ("Classroom Block", "campus", "One of the Junior Secondary classroom blocks."),
-            ("Science Practical Session", "academics", "Students during a Basic Science practical."),
-            ("Inter-House Sports", "sports", "Annual inter-house sports competition."),
-            ("Cultural Day", "events", "Students in traditional attire for Cultural Day."),
-            ("Sunday Mass", "spiritual", "The school community at weekly Mass."),
+        # (title, category, caption, photo_count) — Cultural Day gets several
+        # photos to demonstrate the slideshow with more than one slide.
+        albums = [
+            ("Front Gate & Signage", "campus", "The school entrance along the Ogboja road.", 1),
+            ("Classroom Block", "campus", "One of the Junior Secondary classroom blocks.", 2),
+            ("Science Practical Session", "academics", "Students during a Basic Science practical.", 2),
+            ("Inter-House Sports", "sports", "Annual inter-house sports competition.", 3),
+            ("Cultural Day", "events", "Students in traditional attire for Cultural Day.", 4),
+            ("Sunday Mass", "spiritual", "The school community at weekly Mass.", 2),
         ]
-
-        for i, (title, category, caption) in enumerate(entries):
+        for i, (title, category, caption, photo_count) in enumerate(albums):
             album, _ = GalleryAlbum.objects.get_or_create(
-                title=title,
-                defaults={
-                    "category": category,
-                    "caption": caption,
-                    "order": i,
-                },
+                title=title, defaults={"category": category, "caption": caption, "order": i}
             )
-
-            # Create one placeholder slide for albums that do not yet
-            # have any uploaded photographs. Real photographs can be
-            # added later from the Django admin.
-            if not album.photos.exists():
-                GalleryPhoto.objects.create(
-                    album=album,
-                    caption=caption,
-                    order=0,
-                )
+            for p in range(photo_count):
+                GalleryPhoto.objects.get_or_create(album=album, order=p)
 
     def seed_news(self):
         today = timezone.now().date()
@@ -353,3 +348,16 @@ class Command(BaseCommand):
                     "start_datetime": start_datetime,
                 },
             )
+
+    def seed_hero_slides(self):
+        # No real photos yet — clearly-labeled placeholder slides that
+        # demonstrate the auto-advancing slideshow mechanism. Replace with
+        # real event/award photos via the admin once available.
+        slides = [
+            "[Placeholder] Founder's Day Celebration",
+            "[Placeholder] WASSCE Excellence Award",
+            "[Placeholder] Inter-House Sports Trophy",
+            "[Placeholder] Cultural Day Celebration",
+        ]
+        for i, title in enumerate(slides):
+            HeroSlide.objects.get_or_create(title=title, defaults={"order": i})

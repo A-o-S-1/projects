@@ -275,3 +275,164 @@ class RecalculatePositionsServiceTests(TestCase):
         # out of 1), not penalized for scoring lower than Class A students.
         b_term_result = TermResult.objects.get(student=strong_in_b, term=term)
         self.assertEqual(b_term_result.position_in_class, "1st out of 1")
+
+
+class WorkbookUploadTests(TestCase):
+    """
+    Covers the Excel workbook importer (REGISTER + term sheets), including
+    the class-level bug we found and fixed: ClassRoom.level must be stored
+    as 'jss1'/'ss2' (matching LEVEL_CHOICES), never 'junior'/'senior' —
+    getting this wrong silently breaks subject-level disambiguation.
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        from django.contrib.auth.models import User
+        cls.staff_user = User.objects.create_user(
+            username="staffuser", password="testpass123", is_staff=True
+        )
+        cls.session = AcademicSession.objects.create(
+            label="2025/2026", start_date=datetime.date(2025, 9, 1),
+            end_date=datetime.date(2026, 7, 31), is_current=True,
+        )
+        department = Department.objects.create(name="Test Dept")
+        Subject.objects.create(name="English Studies", department=department, level="junior")
+        Subject.objects.create(name="Mathematics", department=department, level="junior")
+        Subject.objects.create(name="Mathematics", department=department, level="senior")
+
+    def _build_workbook(self):
+        import io
+        import openpyxl
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "REGISTER"
+        ws["A2"] = "Class Code:"
+        ws["B2"] = "J1A"
+        ws["A4"] = "S/N"; ws["B4"] = "Admission No."; ws["C4"] = "Surname"; ws["D4"] = "First Name"
+        ws["A5"] = 1; ws["B5"] = "MDSJ1A001"; ws["C5"] = "Nwosu"; ws["D5"] = "Adaeze"
+
+        ws2 = wb.create_sheet("1ST TERM")
+        ws2["A4"] = "Admission No."; ws2["B4"] = "Name"
+        ws2["C3"] = "English Studies"; ws2["G3"] = "Mathematics"
+        ws2["C4"] = "CA"; ws2["D4"] = "Exam"; ws2["E4"] = "Total"; ws2["F4"] = "Grade"
+        ws2["G4"] = "CA"; ws2["H4"] = "Exam"; ws2["I4"] = "Total"; ws2["J4"] = "Grade"
+        ws2["A5"] = "MDSJ1A001"; ws2["B5"] = "Nwosu Adaeze"
+        ws2["C5"] = 24; ws2["D5"] = 60
+        ws2["G5"] = 20; ws2["H5"] = 58
+
+        buffer = io.BytesIO()
+        wb.save(buffer)
+        buffer.seek(0)
+        return buffer.read()
+
+    def test_anonymous_access_blocked(self):
+        response = self.client.get(reverse("results:upload_workbook"))
+        self.assertNotEqual(response.status_code, 200)
+
+    def test_workbook_upload_creates_student_and_classroom_correctly(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        self.client.force_login(self.staff_user)
+        upload = SimpleUploadedFile(
+            "test.xlsx", self._build_workbook(),
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        response = self.client.post(reverse("results:upload_workbook"), {
+            "session": self.session.id, "workbook_file": upload,
+        })
+        self.assertEqual(response.status_code, 200)
+
+        student = Student.objects.get(admission_number="MDSJ1A001")
+        self.assertEqual(student.first_name, "Adaeze")
+        self.assertEqual(student.last_name, "Nwosu")
+
+        # The bug we caught: level must be 'jss1', not 'junior'.
+        classroom = ClassRoom.objects.get(name="JSS1A")
+        self.assertEqual(classroom.level, "jss1")
+        self.assertEqual(classroom.subject_level, "junior")
+
+    def test_workbook_upload_writes_correct_scores_to_correct_subject_level(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from apps.results.models import ResultEntry, Term
+
+        self.client.force_login(self.staff_user)
+        upload = SimpleUploadedFile(
+            "test.xlsx", self._build_workbook(),
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        self.client.post(reverse("results:upload_workbook"), {
+            "session": self.session.id, "workbook_file": upload,
+        })
+
+        term = Term.objects.get(session=self.session, name="first")
+        student = Student.objects.get(admission_number="MDSJ1A001")
+        math_entry = ResultEntry.objects.get(student=student, term=term, subject__name="Mathematics")
+
+        # Must resolve to the JUNIOR Mathematics, not the senior one —
+        # this is the ambiguity the level-scoped lookup exists to prevent.
+        self.assertEqual(math_entry.subject.level, "junior")
+        self.assertEqual(math_entry.ca_score, 20)
+        self.assertEqual(math_entry.exam_score, 58)
+
+
+class StaffPrintViewTests(TestCase):
+    """
+    Covers the print-without-scratch-card staff views added for form
+    teachers/admin — must require staff login, and must actually show
+    the requested student/class's real data.
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        from django.contrib.auth.models import User
+        from apps.results.models import ResultEntry, TermResult
+
+        cls.staff_user = User.objects.create_user(
+            username="printstaff", password="testpass123", is_staff=True
+        )
+        session = AcademicSession.objects.create(
+            label="2025/2026", start_date=datetime.date(2025, 9, 1),
+            end_date=datetime.date(2026, 7, 31), is_current=True,
+        )
+        cls.term = Term.objects.create(session=session, name="first", is_current=True)
+        cls.classroom = ClassRoom.objects.create(name="JSS1A", level="jss1", arm="A")
+        cls.student = Student.objects.create(
+            admission_number="PRINT/0001", first_name="Print", last_name="Test",
+            current_class=cls.classroom,
+        )
+        department = Department.objects.create(name="Print Test Dept")
+        subject = Subject.objects.create(name="Print Subject", department=department, level="junior")
+        ResultEntry.objects.create(student=cls.student, term=cls.term, subject=subject, ca_score=20, exam_score=50)
+        cls.term_result = TermResult.objects.create(
+            student=cls.student, term=cls.term, overall_total=70, average=70, is_published=True,
+        )
+
+    def test_individual_print_requires_staff_login(self):
+        url = reverse("results:staff_result_print", args=[self.student.id, self.term.id])
+        response = self.client.get(url, follow=True)
+        self.assertIn("login", response.request["PATH_INFO"].lower())
+
+    def test_individual_print_shows_correct_student_when_logged_in(self):
+        self.client.force_login(self.staff_user)
+        url = reverse("results:staff_result_print", args=[self.student.id, self.term.id])
+        response = self.client.get(url)
+        self.assertContains(response, "Test Print")  # full_name is "Last First"
+        self.assertContains(response, "Print Subject")
+
+    def test_individual_print_does_not_require_scratch_card(self):
+        """The whole point of this view: no PIN/serial needed at all."""
+        self.client.force_login(self.staff_user)
+        url = reverse("results:staff_result_print", args=[self.student.id, self.term.id])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_class_bulk_print_requires_staff_login(self):
+        response = self.client.get(reverse("results:staff_class_results_print"), follow=True)
+        self.assertIn("login", response.request["PATH_INFO"].lower())
+
+    def test_class_bulk_print_lists_every_student_in_class(self):
+        self.client.force_login(self.staff_user)
+        url = f"{reverse('results:staff_class_results_print')}?term={self.term.id}&classroom={self.classroom.id}"
+        response = self.client.get(url)
+        self.assertContains(response, "Test Print")

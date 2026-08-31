@@ -15,7 +15,23 @@
                 <a href="{% url 'results:check' %}" class="btn btn--outline">Check Result</a>
             </div>
         </div>
-        <div class="hero__arch" aria-hidden="true"></div>
+        <div class="hero__arch" aria-hidden="true" data-hero-slideshow>
+            {% if hero_slides %}
+                {% for slide in hero_slides %}
+                <div class="hero__slide {% if forloop.first %}is-active{% endif %}" data-hero-slide>
+                    {% if slide.image %}
+                    <img src="{{ slide.image.url }}" alt="">
+                    {% else %}
+                    <div class="hero__slide-placeholder">
+                        <span>{{ slide.title }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+                <img src="{% static 'img/logo-on-dark.svg' %}" alt="" class="hero__arch-crest">
+            {% endif %}
+        </div>
     </div>
 </section>
 
@@ -81,4 +97,8 @@
     </div>
 </section>
 {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/hero-slideshow.js' %}" defer></script>
 {% endblock %}

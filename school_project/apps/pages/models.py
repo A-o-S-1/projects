@@ -204,3 +204,23 @@ class AdmissionInquiry(models.Model):
 
     def __str__(self):
         return f"{self.child_name} ({self.get_level_applying_for_display()}) — {self.parent_name}"
+
+
+class HeroSlide(models.Model):
+    """
+    One slide in the homepage hero's auto-advancing slideshow — past
+    events, awards, notable school moments. `image` is optional (same
+    placeholder-fallback pattern as Gallery/Staff) so the slideshow
+    mechanism can be seeded and demonstrated before real photos exist.
+    """
+
+    title = models.CharField(max_length=150, help_text="e.g. 'WASSCE Excellence Award 2025'")
+    image = models.ImageField(upload_to="hero/", blank=True, null=True)
+    order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True, help_text="Uncheck to hide without deleting.")
+
+    class Meta:
+        ordering = ["order"]
+
+    def __str__(self):
+        return self.title

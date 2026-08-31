@@ -1,0 +1,106 @@
+{% load static %}
+{% comment %}Usage: {% include "partials/result_sheet.html" with term_result=... student=... result_entries=... psychomotor_ratings=... %}{% endcomment %}
+        <div class="result-sheet" id="result-sheet">
+            <div class="result-sheet__header">
+                <img src="{% static 'img/logo.svg' %}" alt="" class="result-sheet__crest">
+                <div>
+                    <h2>{{ school_info.school_name }}</h2>
+                    <p>{{ school_info.address }}</p>
+                </div>
+            </div>
+
+            <table class="result-info-table">
+                <tr>
+                    <th>Name of Student</th><td>{{ student.full_name }}</td>
+                    <th>Current Term</th><td>{{ term_result.term.get_name_display }}</td>
+                </tr>
+                <tr>
+                    <th>Class</th><td>{{ student.current_class }}</td>
+                    <th>Academic Session</th><td>{{ term_result.term.session }}</td>
+                </tr>
+                <tr>
+                    <th>Admission Number</th><td>{{ student.admission_number }}</td>
+                    <th>Next Resumption Date</th><td>{{ term_result.term.next_term_begins|default:"—" }}</td>
+                </tr>
+                <tr>
+                    <th>Overall Total Score</th><td>{{ term_result.overall_total|default:"—" }}</td>
+                    <th>Average</th><td>{{ term_result.average|default:"—" }}%</td>
+                </tr>
+                <tr>
+                    <th>Position in Class</th><td>{{ term_result.position_in_class|default:"—" }}</td>
+                    <th>Overall Performance</th><td>{{ term_result.overall_performance|default:"—" }}</td>
+                </tr>
+                <tr>
+                    <th>Promotion Status</th><td colspan="3">{{ term_result.promotion_status|default:"—" }}</td>
+                </tr>
+            </table>
+
+            <h3 class="result-sheet__section-title">Subject Result Detail</h3>
+            <div class="table-scroll">
+                <table class="result-subjects-table">
+                    <thead>
+                        <tr>
+                            <th>Subject</th>
+                            <th>C.A.<br>(30)</th>
+                            <th>Exam<br>(70)</th>
+                            <th>Total<br>(100)</th>
+                            <th>Grade</th>
+                            <th>Remark</th>
+                            <th>Position</th>
+                            <th>Class<br>Average</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in result_entries %}
+                        <tr>
+                            <td class="align-left">{{ entry.subject.name }}</td>
+                            <td>{{ entry.ca_score }}</td>
+                            <td>{{ entry.exam_score }}</td>
+                            <td>{{ entry.total_score }}</td>
+                            <td><strong>{{ entry.grade_code }}</strong></td>
+                            <td>{{ entry.remark }}</td>
+                            <td>{{ entry.position_in_subject|default:"—" }}</td>
+                            <td>{{ entry.subject_class_average|default:"—" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="8" class="empty-state">No subject scores recorded yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if psychomotor_ratings %}
+            <h3 class="result-sheet__section-title">Psychomotor Skills &amp; Social Behaviour</h3>
+            <div class="psychomotor-grid">
+                <div>
+                    <h4>Psychomotor Skills</h4>
+                    <table class="result-psychomotor-table">
+                        {% for rating in psychomotor_ratings %}
+                        {% if rating.skill.category == "psychomotor" %}
+                        <tr><td class="align-left">{{ rating.skill.name }}</td><td>{{ rating.rating }}</td></tr>
+                        {% endif %}
+                        {% endfor %}
+                    </table>
+                </div>
+                <div>
+                    <h4>Social Behaviour</h4>
+                    <table class="result-psychomotor-table">
+                        {% for rating in psychomotor_ratings %}
+                        {% if rating.skill.category == "social" %}
+                        <tr><td class="align-left">{{ rating.skill.name }}</td><td>{{ rating.rating }}</td></tr>
+                        {% endif %}
+                        {% endfor %}
+                    </table>
+                </div>
+            </div>
+            <p class="result-sheet__key">Key: 5 = Excellent, 4 = Good, 3 = Fair, 2 = Poor, 1 = Very Poor</p>
+            {% endif %}
+
+            <div class="result-remarks">
+                <p><strong>Class Teacher's Remark:</strong> {{ term_result.class_teacher_remark|default:"—" }}</p>
+                <p><strong>Administrator's Remark:</strong> {{ term_result.administrator_remark|default:"—" }}</p>
+                {% if term_result.term.next_term_fees %}
+                <p><strong>Next Term Fees:</strong> ₦{{ term_result.term.next_term_fees }}</p>
+                {% endif %}
+            </div>
+        </div>

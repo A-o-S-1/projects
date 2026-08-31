@@ -1,11 +1,10 @@
 {% load static nav_tags %}
 <header class="site-header">
     <div class="container site-header__inner">
-        <a href="{% url 'pages:home' %}" class="brand">
-            <span class="brand__mark" aria-hidden="true">
-                <img src="{% static 'img/logo-on-dark.svg' %}" alt="" width="48" height="48">
+        <a href="{% url 'pages:home' %}" class="brand" aria-label="{{ school_info.school_name }} — Home">
+            <span class="brand__mark">
+                <img src="{% static 'img/logo-on-dark.svg' %}" alt="" width="64" height="64">
             </span>
-            <span class="brand__text">{{ school_info.school_name }}</span>
         </a>
 
         <button class="nav-toggle" aria-expanded="false" aria-controls="primary-nav" aria-label="Toggle navigation menu">
