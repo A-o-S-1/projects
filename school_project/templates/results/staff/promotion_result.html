@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+{% load result_extras %}
+
+{% block title %}Promotion Results — Staff Tools{% endblock %}
+
+{% block extra_css %}
+<style>
+    @media print {
+        body { margin: 0; padding: 0; background: white; }
+        .page-hero { display: none; }
+        .site-form { display: none; }
+        .print-options { display: none; }
+        .promotion-actions { display: none; }
+        .promotion-scroll { margin: 0; overflow: visible !important; }
+        table { width: 100%; border-collapse: collapse; font-size: 10px; }
+        th, td { padding: 6px; text-align: center; border: 1px solid #000; }
+        th { background-color: #e0e0e0; font-weight: bold; }
+        td.name { text-align: left; }
+        td.admission { text-align: center; }
+        tr { page-break-inside: avoid; }
+        .promotion-header { 
+            text-align: center; 
+            font-weight: bold; 
+            font-size: 14px;
+            margin-bottom: 10px;
+            page-break-after: avoid;
+        }
+    }
+    
+    @page {
+        size: A4 landscape;
+        margin: 0.5cm;
+    }
+    
+    .print-options {
+        background: #f9f9f9;
+        border: 1px solid #ddd;
+        padding: 15px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+    }
+    
+    .print-options label {
+        display: inline-block;
+        margin-right: 20px;
+    }
+    
+    .promotion-scroll {
+        overflow-x: auto;
+        margin: 20px 0;
+    }
+    
+    .promotion-header {
+        text-align: center;
+        font-weight: bold;
+        margin: 20px 0 10px 0;
+    }
+    
+    .status-promoted {
+        background-color: #d4edda;
+        color: #155724;
+        font-weight: bold;
+    }
+    
+    .status-trial {
+        background-color: #fff3cd;
+        color: #856404;
+        font-weight: bold;
+    }
+    
+    .status-repeat {
+        background-color: #f8d7da;
+        color: #721c24;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+    <div class="container">
+        <p class="eyebrow">Staff Tools</p>
+        <h1>Promotion Results</h1>
+        <p class="page-hero__lede">Cumulative results and promotion status for each student at the end of session.</p>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        <form method="get" class="site-form">
+            {% include "partials/form_field.html" with field=form.session %}
+            {% include "partials/form_field.html" with field=form.classroom %}
+            <button type="submit" class="btn btn--accent">Generate</button>
+        </form>
+
+        {% if promotions %}
+        <div class="print-options">
+            <label>
+                <input type="checkbox" id="landscape-print" checked>
+                <strong>Print in Landscape Mode</strong>
+            </label>
+            <label>
+                <select id="scaling-select" onchange="updateScaling()">
+                    <option value="100">100% Scale</option>
+                    <option value="85">85% Scale</option>
+                    <option value="75">75% Scale</option>
+                    <option value="fit">Fit to Page</option>
+                </select>
+            </label>
+            <label>
+                <select id="paper-size">
+                    <option value="A4">A4 Paper</option>
+                    <option value="A3">A3 Paper</option>
+                    <option value="letter">Letter Paper</option>
+                </select>
+            </label>
+        </div>
+
+        <div class="promotion-actions">
+            <button type="button" class="btn btn--outline-dark" onclick="window.print()">Print Promotion Results</button>
+        </div>
+
+        <div class="promotion-header">
+            <p>{{ session.label }} — {{ classroom.name }}</p>
+            <p style="font-size: 12px;">PROMOTION RESULTS</p>
+        </div>
+
+        {% if promotions %}
+        <div class="promotion-scroll">
+            <table class="promotion-table">
+                <thead>
+                    <tr>
+                        <th>S/N</th>
+                        <th>Student Name</th>
+                        <th>Admission No.</th>
+                        <th>1st Term</th>
+                        <th>2nd Term</th>
+                        <th>3rd Term</th>
+                        <th>Cumulative Total</th>
+                        <th>Average</th>
+                        <th>Position</th>
+                        <th>Promotion Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in promotions %}
+                    {% with sr=item.session_result %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td class="name">{{ item.student.full_name }}</td>
+                        <td class="admission">{{ item.student.admission_number }}</td>
+                        <td>{{ sr.first_term_total|default:"—" }}</td>
+                        <td>{{ sr.second_term_total|default:"—" }}</td>
+                        <td>{{ sr.third_term_total|default:"—" }}</td>
+                        <td><strong>{{ sr.cumulative_total|default:"—" }}</strong></td>
+                        <td>{{ sr.session_average|default:"—" }}</td>
+                        <td>{{ sr.overall_position|default:"—" }}</td>
+                        <td class="
+                            {% if sr.promotion_status == 'promoted' %}status-promoted
+                            {% elif sr.promotion_status == 'promoted_on_trial' %}status-trial
+                            {% elif sr.promotion_status == 'repeat' %}status-repeat
+                            {% endif %}
+                        ">
+                            {% if sr.promotion_status == 'promoted' %}Promoted
+                            {% elif sr.promotion_status == 'promoted_on_trial' %}Promoted on Trial
+                            {% elif sr.promotion_status == 'repeat' %}Repeat
+                            {% else %}—{% endif %}
+                        </td>
+                    </tr>
+                    {% endwith %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="empty-state">No promotion results found for this class in {{ session.label }}.</p>
+        {% endif %}
+
+        {% else %}
+            <p class="empty-state">No students found in this class.</p>
+        {% endif %}
+    </div>
+</section>
+
+<script>
+function updateScaling() {
+    const scaling = document.getElementById('scaling-select').value;
+    const landscape = document.getElementById('landscape-print').checked;
+    
+    if (scaling === 'fit') {
+        document.body.style.transform = 'scale(' + (landscape ? '0.85' : '0.95') + ')';
+        document.body.style.transformOrigin = 'top left';
+    } else {
+        const scale = parseInt(scaling) / 100;
+        document.body.style.transform = 'scale(' + scale + ')';
+        document.body.style.transformOrigin = 'top left';
+    }
+}
+
+document.getElementById('landscape-print').addEventListener('change', function() {
+    updateScaling();
+});
+
+document.getElementById('paper-size').addEventListener('change', function() {
+    const size = this.value;
+    const style = document.createElement('style');
+    if (size === 'A3') {
+        style.innerHTML = '@page { size: A3 landscape; }';
+    } else if (size === 'letter') {
+        style.innerHTML = '@page { size: letter landscape; }';
+    } else {
+        style.innerHTML = '@page { size: A4 landscape; }';
+    }
+    document.head.appendChild(style);
+});
+</script>
+{% endblock %}

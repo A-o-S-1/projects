@@ -27,14 +27,24 @@ class ScoreCSVUploadForm(forms.Form):
 
 
 class MasterSheetForm(forms.Form):
-    term = forms.ChoiceField(label="Term")
+    RESULT_TYPE_CHOICES = [
+        ("term", "Single Term"),
+        ("session_cumulative", "Session Cumulative (Annual Broadsheet)"),
+    ]
+    
+    result_type = forms.ChoiceField(label="Result Type", choices=RESULT_TYPE_CHOICES, initial="term")
+    term = forms.ChoiceField(label="Term", required=False)
+    session = forms.ChoiceField(label="Session", required=False)
     classroom = forms.ChoiceField(label="Class")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        from .models import ClassRoom, Term
+        from .models import AcademicSession, ClassRoom, Term
         self.fields["term"].choices = [
             (t.id, str(t)) for t in Term.objects.select_related("session").all()
+        ]
+        self.fields["session"].choices = [
+            (s.id, s.label) for s in AcademicSession.objects.all()
         ]
         self.fields["classroom"].choices = [
             (c.id, c.name) for c in ClassRoom.objects.all()
@@ -81,20 +91,6 @@ class ResultLookupForm(forms.Form):
 
     # Honeypot — same spam-mitigation pattern as the admissions/contact forms.
     website = forms.CharField(required=False, widget=forms.HiddenInput())
-    """
-    Public result lookup form. Deliberately a plain Form, not a ModelForm —
-    none of these fields map to a single model; validation logic lives in
-    the view since it needs to check three models together (Student,
-    ScratchCard, TermResult), not just field-level rules.
-    """
-
-    admission_number = forms.CharField(label="Admission Number", max_length=20)
-    term = forms.ChoiceField(label="Term")
-    pin = forms.CharField(label="Scratch Card PIN", max_length=12, widget=forms.PasswordInput(render_value=True))
-    serial_number = forms.CharField(label="Serial Number", max_length=20)
-
-    # Honeypot — same spam-mitigation pattern as the admissions/contact forms.
-    website = forms.CharField(required=False, widget=forms.HiddenInput())
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -115,3 +111,19 @@ class ResultLookupForm(forms.Form):
         if cleaned.get("pin"):
             cleaned["pin"] = cleaned["pin"].strip()
         return cleaned
+
+
+class PromotionResultForm(forms.Form):
+    """Form for selecting a class and session to print promotion results."""
+    session = forms.ChoiceField(label="Academic Session")
+    classroom = forms.ChoiceField(label="Class")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from .models import AcademicSession, ClassRoom
+        self.fields["session"].choices = [
+            (s.id, s.label) for s in AcademicSession.objects.all()
+        ]
+        self.fields["classroom"].choices = [
+            (c.id, c.name) for c in ClassRoom.objects.all()
+        ]

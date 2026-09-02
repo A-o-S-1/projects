@@ -3,71 +3,215 @@
 
 {% block title %}Class Master Sheet — Staff Tools{% endblock %}
 
+{% block extra_css %}
+<style>
+    @media print {
+        body { margin: 0; padding: 0; }
+        .page-hero { display: none; }
+        .site-form { display: none; }
+        .master-sheet-actions { display: none; }
+        .master-sheet-scroll { margin: 0; overflow: visible !important; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; }
+        th, td { padding: 4px; text-align: left; border: 1px solid #333; }
+        th { background-color: #f0f0f0; font-weight: bold; }
+        tr { page-break-inside: avoid; }
+    }
+    
+    @page {
+        size: A4 landscape;
+        margin: 0.5cm;
+    }
+    
+    .print-options {
+        background: #f9f9f9;
+        border: 1px solid #ddd;
+        padding: 15px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+    }
+    
+    .print-options label {
+        display: inline-block;
+        margin-right: 20px;
+    }
+    
+    .master-sheet-scroll {
+        overflow-x: auto;
+        margin: 20px 0;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <section class="page-hero">
     <div class="container">
         <p class="eyebrow">Staff Tools</p>
         <h1>Class Master Sheet</h1>
-        <p class="page-hero__lede">A printable broadsheet of every student's scores for one class and term.</p>
+        <p class="page-hero__lede">A printable broadsheet of every student's scores for one class.</p>
     </div>
 </section>
 
 <section class="section">
     <div class="container">
-        <form method="get" class="site-form site-form--inline">
-            {% include "partials/form_field.html" with field=form.term %}
+        <form method="get" class="site-form">
+            {% include "partials/form_field.html" with field=form.result_type %}
+            
+            {% if result_type == "term" %}
+                {% include "partials/form_field.html" with field=form.term %}
+            {% else %}
+                {% include "partials/form_field.html" with field=form.session %}
+            {% endif %}
+            
             {% include "partials/form_field.html" with field=form.classroom %}
             <button type="submit" class="btn btn--accent">Generate</button>
         </form>
 
         {% if students %}
+        <div class="print-options">
+            <label>
+                <input type="checkbox" id="landscape-print" checked>
+                <strong>Print in Landscape Mode</strong>
+            </label>
+            <label>
+                <select id="scaling-select" onchange="updateScaling()">
+                    <option value="100">100% Scale</option>
+                    <option value="85">85% Scale (fits better)</option>
+                    <option value="75">75% Scale (more fit)</option>
+                    <option value="fit">Fit to Page</option>
+                </select>
+            </label>
+            <label>
+                <select id="paper-size">
+                    <option value="A4">A4 Paper</option>
+                    <option value="A3">A3 Paper</option>
+                    <option value="letter">Letter Paper</option>
+                </select>
+            </label>
+        </div>
+
         <div class="master-sheet-actions">
             <button type="button" class="btn btn--outline-dark" onclick="window.print()">Print This Sheet</button>
         </div>
 
-        <h2>{{ classroom.name }} — {{ term }}</h2>
-
-        {% if students %}
-        <div class="master-sheet-scroll">
-            <table class="master-sheet-table">
-                <thead>
-                    <tr>
-                        <th>Student</th>
-                        <th>Admission No.</th>
-                        {% for subject in subjects %}<th>{{ subject.name }}</th>{% endfor %}
-                        <th>Total</th>
-                        <th>Average</th>
-                        <th>Position</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for student in students %}
-                    <tr>
-                        <td>{{ student.full_name }}</td>
-                        <td>{{ student.admission_number }}</td>
-                        {% for subject in subjects %}
-                        <td>
-                            {% with entry=entries_by_student|get_item:student.id %}
-                                {% with score_entry=entry.entries|get_item:subject.id %}
-                                    {% if score_entry %}{{ score_entry.total_score }}{% else %}—{% endif %}
-                                {% endwith %}
+        {% if result_type == "session_cumulative" %}
+            <h2>{{ classroom.name }} — {{ session.label }} (Cumulative Annual Broadsheet)</h2>
+            {% if session_results_by_student %}
+            <div class="master-sheet-scroll">
+                <table class="master-sheet-table">
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Admission No.</th>
+                            <th>1st Term</th>
+                            <th>2nd Term</th>
+                            <th>3rd Term</th>
+                            <th>Cumulative Total</th>
+                            <th>Average</th>
+                            <th>Position</th>
+                            <th>Promotion Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in students %}
+                        <tr>
+                            <td>{{ student.full_name }}</td>
+                            <td>{{ student.admission_number }}</td>
+                            {% with sr=session_results_by_student|get_item:student.id %}
+                                <td>{{ sr.first_term_total|default:"—" }}</td>
+                                <td>{{ sr.second_term_total|default:"—" }}</td>
+                                <td>{{ sr.third_term_total|default:"—" }}</td>
+                                <td><strong>{{ sr.cumulative_total|default:"—" }}</strong></td>
+                                <td>{{ sr.session_average|default:"—" }}</td>
+                                <td>{{ sr.overall_position|default:"—" }}</td>
+                                <td>{{ sr.get_promotion_status_display|default:"—" }}</td>
                             {% endwith %}
-                        </td>
+                        </tr>
                         {% endfor %}
-                        {% with row=entries_by_student|get_item:student.id %}
-                        <td>{{ row.term_result.overall_total|default:"—" }}</td>
-                        <td>{{ row.term_result.average|default:"—" }}</td>
-                        <td>{{ row.term_result.position_in_class|default:"—" }}</td>
-                        {% endwith %}
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="empty-state">No cumulative results found for this class in {{ session.label }}.</p>
+            {% endif %}
         {% else %}
-        <p class="empty-state">No students found in this class.</p>
+            <h2>{{ classroom.name }} — {{ term }}</h2>
+            {% if subjects %}
+            <div class="master-sheet-scroll">
+                <table class="master-sheet-table">
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Admission No.</th>
+                            {% for subject in subjects %}<th>{{ subject.name }}</th>{% endfor %}
+                            <th>Total</th>
+                            <th>Average</th>
+                            <th>Position</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in students %}
+                        <tr>
+                            <td>{{ student.full_name }}</td>
+                            <td>{{ student.admission_number }}</td>
+                            {% for subject in subjects %}
+                            <td>
+                                {% with entry=entries_by_student|get_item:student.id %}
+                                    {% with score_entry=entry.entries|get_item:subject.id %}
+                                        {% if score_entry %}{{ score_entry.total_score }}{% else %}—{% endif %}
+                                    {% endwith %}
+                                {% endwith %}
+                            </td>
+                            {% endfor %}
+                            {% with row=entries_by_student|get_item:student.id %}
+                            <td>{{ row.term_result.overall_total|default:"—" }}</td>
+                            <td>{{ row.term_result.average|default:"—" }}</td>
+                            <td>{{ row.term_result.position_in_class|default:"—" }}</td>
+                            {% endwith %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="empty-state">No subjects found for this class and term.</p>
+            {% endif %}
         {% endif %}
+        {% else %}
+            <p class="empty-state">No students found in this class.</p>
         {% endif %}
     </div>
 </section>
+
+<script>
+function updateScaling() {
+    const scaling = document.getElementById('scaling-select').value;
+    const landscape = document.getElementById('landscape-print').checked;
+    
+    if (scaling === 'fit') {
+        document.body.style.transform = 'scale(' + (landscape ? '0.8' : '0.95') + ')';
+        document.body.style.transformOrigin = 'top left';
+    } else {
+        const scale = parseInt(scaling) / 100;
+        document.body.style.transform = 'scale(' + scale + ')';
+        document.body.style.transformOrigin = 'top left';
+    }
+}
+
+document.getElementById('landscape-print').addEventListener('change', function() {
+    updateScaling();
+});
+
+document.getElementById('paper-size').addEventListener('change', function() {
+    const size = this.value;
+    const style = document.createElement('style');
+    if (size === 'A3') {
+        style.innerHTML = '@page { size: A3 landscape; }';
+    } else if (size === 'letter') {
+        style.innerHTML = '@page { size: letter landscape; }';
+    } else {
+        style.innerHTML = '@page { size: A4 landscape; }';
+    }
+    document.head.appendChild(style);
+});
+</script>
 {% endblock %}

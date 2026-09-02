@@ -12,7 +12,7 @@ from django.views import View
 from django.views.generic import FormView
 
 from . import services
-from .forms import MasterSheetForm, ResultLookupForm, ScoreCSVUploadForm, WorkbookUploadForm
+from .forms import MasterSheetForm, PromotionResultForm, ResultLookupForm, ScoreCSVUploadForm, WorkbookUploadForm
 from .models import (
     AcademicSession, ClassRoom, ResultCheckLog, ResultEntry, PsychomotorRating,
     ScratchCard, SessionResult, Student, Term, TermResult,
@@ -270,46 +270,93 @@ class ScoreUploadView(View):
 class MasterSheetView(View):
     """
     Printable class-wide broadsheet: every active student in a class, every
-    subject as a column, for one term — for teachers/admin, not parents.
-    Distinct from the individual result sheet parents see via the public
-    lookup (results/result_detail.html).
+    subject as a column, for one term OR cumulative results for one session.
+    For teachers/admin, not parents. Supports both term-based and session 
+    cumulative (annual broadsheet) displays with flexible print formatting.
     """
     template_name = "results/staff/master_sheet.html"
 
     def get(self, request):
-        term_id = request.GET.get("term")
+        from .models import AcademicSession, SessionResult
+        
+        result_type = request.GET.get("result_type", "term")
         classroom_id = request.GET.get("classroom")
+        
+        form_kwargs = {"initial": {"result_type": result_type}}
+        if classroom_id:
+            form_kwargs["initial"]["classroom"] = classroom_id
 
-        if not term_id or not classroom_id:
-            return render(request, self.template_name, {"form": MasterSheetForm()})
+        if result_type == "session_cumulative":
+            session_id = request.GET.get("session")
+            if session_id:
+                form_kwargs["initial"]["session"] = session_id
+            
+            if not session_id or not classroom_id:
+                return render(request, self.template_name, {
+                    "form": MasterSheetForm(**form_kwargs),
+                    "result_type": "session_cumulative"
+                })
 
-        term = Term.objects.get(pk=term_id)
-        classroom = ClassRoom.objects.get(pk=classroom_id)
-        students = list(classroom.students.filter(is_active=True).order_by("last_name", "first_name"))
+            session = AcademicSession.objects.get(pk=session_id)
+            classroom = ClassRoom.objects.get(pk=classroom_id)
+            students = list(classroom.students.filter(is_active=True).order_by("last_name", "first_name"))
+            
+            # Get session results (cumulative annual data)
+            session_results_by_student = {}
+            for student in students:
+                session_result = SessionResult.objects.filter(
+                    student=student, session=session
+                ).first()
+                session_results_by_student[student.id] = session_result
 
-        subjects = list(
-            Subject.objects.filter(
-                result_entries__student__in=students, result_entries__term=term
-            ).distinct().order_by("name")
-        )
+            return render(request, self.template_name, {
+                "form": MasterSheetForm(**form_kwargs),
+                "result_type": "session_cumulative",
+                "session": session,
+                "classroom": classroom,
+                "students": students,
+                "session_results_by_student": session_results_by_student,
+            })
+        else:
+            # Original term-based view
+            term_id = request.GET.get("term")
+            if term_id:
+                form_kwargs["initial"]["term"] = term_id
+            
+            if not term_id or not classroom_id:
+                return render(request, self.template_name, {
+                    "form": MasterSheetForm(**form_kwargs),
+                    "result_type": "term"
+                })
 
-        entries_by_student = {}
-        for student in students:
-            entries = {
-                e.subject_id: e
-                for e in ResultEntry.objects.filter(student=student, term=term)
-            }
-            term_result = TermResult.objects.filter(student=student, term=term).first()
-            entries_by_student[student.id] = {"entries": entries, "term_result": term_result}
+            term = Term.objects.get(pk=term_id)
+            classroom = ClassRoom.objects.get(pk=classroom_id)
+            students = list(classroom.students.filter(is_active=True).order_by("last_name", "first_name"))
 
-        return render(request, self.template_name, {
-            "form": MasterSheetForm(initial={"term": term_id, "classroom": classroom_id}),
-            "term": term,
-            "classroom": classroom,
-            "students": students,
-            "subjects": subjects,
-            "entries_by_student": entries_by_student,
-        })
+            subjects = list(
+                Subject.objects.filter(
+                    result_entries__student__in=students, result_entries__term=term
+                ).distinct().order_by("name")
+            )
+
+            entries_by_student = {}
+            for student in students:
+                entries = {
+                    e.subject_id: e
+                    for e in ResultEntry.objects.filter(student=student, term=term)
+                }
+                term_result = TermResult.objects.filter(student=student, term=term).first()
+                entries_by_student[student.id] = {"entries": entries, "term_result": term_result}
+
+            return render(request, self.template_name, {
+                "form": MasterSheetForm(**form_kwargs),
+                "result_type": "term",
+                "term": term,
+                "classroom": classroom,
+                "students": students,
+                "subjects": subjects,
+                "entries_by_student": entries_by_student,
+            })
 
 
 TERM_SHEET_NAMES = {"1ST TERM": "first", "2ND TERM": "second", "3RD TERM": "third"}
@@ -607,4 +654,48 @@ class StaffClassResultsPrintView(View):
             "term": term,
             "classroom": classroom,
             "sheets": sheets,
+        })
+
+
+@method_decorator(staff_member_required, name="dispatch")
+class PromotionResultView(View):
+    """
+    Prints promotion results (cumulative annual data) for each student in a class
+    at the end of an academic session. Shows: cumulative score, average, position,
+    and promotion status (Promoted/Promoted on Trial/Repeat).
+    Optimized for printing with landscape mode and flexible scaling.
+    """
+    template_name = "results/staff/promotion_result.html"
+
+    def get(self, request):
+        session_id = request.GET.get("session")
+        classroom_id = request.GET.get("classroom")
+
+        form_kwargs = {}
+        if session_id and classroom_id:
+            form_kwargs["initial"] = {"session": session_id, "classroom": classroom_id}
+
+        if not session_id or not classroom_id:
+            return render(request, self.template_name, {"form": PromotionResultForm(**form_kwargs)})
+
+        session = AcademicSession.objects.get(pk=session_id)
+        classroom = ClassRoom.objects.get(pk=classroom_id)
+        students = list(classroom.students.filter(is_active=True).order_by("last_name", "first_name"))
+
+        # Gather promotion data for all students in the class
+        promotions = []
+        for student in students:
+            session_result = SessionResult.objects.filter(
+                student=student, session=session
+            ).first()
+            promotions.append({
+                "student": student,
+                "session_result": session_result,
+            })
+
+        return render(request, self.template_name, {
+            "form": PromotionResultForm(**form_kwargs),
+            "session": session,
+            "classroom": classroom,
+            "promotions": promotions,
         })
